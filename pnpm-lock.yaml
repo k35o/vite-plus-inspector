@@ -16,27 +16,27 @@ importers:
         specifier: 7.0.0
         version: 7.0.0
       jiti:
-        specifier: 2.6.1
-        version: 2.6.1
+        specifier: 2.7.0
+        version: 2.7.0
     devDependencies:
       '@changesets/changelog-github':
         specifier: 0.7.0
         version: 0.7.0
       '@changesets/cli':
         specifier: 2.31.0
-        version: 2.31.0(@types/node@24.12.4)
+        version: 2.31.0(@types/node@24.13.1)
       '@k8o/oxc-config':
         specifier: 0.1.3
-        version: 0.1.3(oxfmt@0.52.0(vite-plus@0.1.23(@types/node@24.12.4)(jiti@2.6.1)(typescript@6.0.3)))(oxlint@1.67.0(oxlint-tsgolint@0.23.0)(vite-plus@0.1.23(@types/node@24.12.4)(jiti@2.6.1)(typescript@6.0.3)))
+        version: 0.1.3(oxfmt@0.52.0(vite-plus@0.1.23(@types/node@24.13.1)(jiti@2.7.0)(typescript@6.0.3)))(oxlint@1.67.0(oxlint-tsgolint@0.23.0)(vite-plus@0.1.23(@types/node@24.13.1)(jiti@2.7.0)(typescript@6.0.3)))
       '@types/node':
-        specifier: 24.12.4
-        version: 24.12.4
+        specifier: 24.13.1
+        version: 24.13.1
       typescript:
         specifier: 6.0.3
         version: 6.0.3
       vite-plus:
         specifier: 0.1.23
-        version: 0.1.23(@types/node@24.12.4)(jiti@2.6.1)(typescript@6.0.3)
+        version: 0.1.23(@types/node@24.13.1)(jiti@2.7.0)(typescript@6.0.3)
 
 packages:
 
@@ -447,8 +447,8 @@ packages:
   '@types/node@12.20.55':
     resolution: {integrity: sha512-J8xLz7q2OFulZ2cyGTLE1TbbZcjpno7FaN6zdJNrgAdrJ+DZzh/uFR6YrTb4C+nXakvud8Q4+rbhoIWlYQbUFQ==}
 
-  '@types/node@24.12.4':
-    resolution: {integrity: sha512-GUUEShf+PBCGW2KaXwcIt3Yk+e3pkKwWKb9GSyM9WQVE+ep2jzmHdGsHzu4wgcZy5fN9FBdVzjpBQsYlpfpgLA==}
+  '@types/node@24.13.1':
+    resolution: {integrity: sha512-RSpUJGmvsJ1ZeBehQZFhIdpsz+bIpES0nIQXko4Ybq+N+kX6XvOq3Jo+iJ82FWLdblFq85AsMikd3m35jgezYg==}
 
   '@voidzero-dev/vite-plus-core@0.1.23':
     resolution: {integrity: sha512-Twi+95cq1pObzkNR4u6lP7z4gPhtS0/vxeBAdbTvAeA12qlyyFED7mQZnAgaVIN3k1C1ve0997F3/ncUBAwQ8w==}
@@ -816,8 +816,8 @@ packages:
   isexe@2.0.0:
     resolution: {integrity: sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==}
 
-  jiti@2.6.1:
-    resolution: {integrity: sha512-ekilCSN1jwRvIbgeg/57YFh8qQDNbwDb9xT/qu2DAHbFFZUicIl4ygVaAvzveMhMVr3LnpSKTNnwt8PoOfmKhQ==}
+  jiti@2.7.0:
+    resolution: {integrity: sha512-AC/7JofJvZGrrneWNaEnJeOLUx+JlGt7tNa0wZiRPT4MY1wmfKjt2+6O2p2uz2+skll8OZZmJMNqeke7kKbNgQ==}
     hasBin: true
 
   js-yaml@3.14.2:
@@ -1151,8 +1151,8 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
-  undici-types@7.16.0:
-    resolution: {integrity: sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw==}
+  undici-types@7.18.2:
+    resolution: {integrity: sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w==}
 
   universalify@0.1.2:
     resolution: {integrity: sha512-rBJeI5CXAlmy1pV+617WB9J63U6XcazHHF2f2dbJix4XzpUF0RS3Zbj0FGIOCAva5P/d/GBOYaACQ1w+0azUkg==}
@@ -1227,7 +1227,7 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@changesets/cli@2.31.0(@types/node@24.12.4)':
+  '@changesets/cli@2.31.0(@types/node@24.13.1)':
     dependencies:
       '@changesets/apply-release-plan': 7.1.1
       '@changesets/assemble-release-plan': 6.0.10
@@ -1243,7 +1243,7 @@ snapshots:
       '@changesets/should-skip-package': 0.1.2
       '@changesets/types': 6.1.0
       '@changesets/write': 0.4.0
-      '@inquirer/external-editor': 1.0.3(@types/node@24.12.4)
+      '@inquirer/external-editor': 1.0.3(@types/node@24.13.1)
       '@manypkg/get-packages': 1.1.3
       ansi-colors: 4.1.3
       enquirer: 2.4.1
@@ -1348,17 +1348,17 @@ snapshots:
       human-id: 4.2.0
       prettier: 2.8.8
 
-  '@inquirer/external-editor@1.0.3(@types/node@24.12.4)':
+  '@inquirer/external-editor@1.0.3(@types/node@24.13.1)':
     dependencies:
       chardet: 2.1.1
       iconv-lite: 0.7.2
     optionalDependencies:
-      '@types/node': 24.12.4
+      '@types/node': 24.13.1
 
-  '@k8o/oxc-config@0.1.3(oxfmt@0.52.0(vite-plus@0.1.23(@types/node@24.12.4)(jiti@2.6.1)(typescript@6.0.3)))(oxlint@1.67.0(oxlint-tsgolint@0.23.0)(vite-plus@0.1.23(@types/node@24.12.4)(jiti@2.6.1)(typescript@6.0.3)))':
+  '@k8o/oxc-config@0.1.3(oxfmt@0.52.0(vite-plus@0.1.23(@types/node@24.13.1)(jiti@2.7.0)(typescript@6.0.3)))(oxlint@1.67.0(oxlint-tsgolint@0.23.0)(vite-plus@0.1.23(@types/node@24.13.1)(jiti@2.7.0)(typescript@6.0.3)))':
     optionalDependencies:
-      oxfmt: 0.52.0(vite-plus@0.1.23(@types/node@24.12.4)(jiti@2.6.1)(typescript@6.0.3))
-      oxlint: 1.67.0(oxlint-tsgolint@0.23.0)(vite-plus@0.1.23(@types/node@24.12.4)(jiti@2.6.1)(typescript@6.0.3))
+      oxfmt: 0.52.0(vite-plus@0.1.23(@types/node@24.13.1)(jiti@2.7.0)(typescript@6.0.3))
+      oxlint: 1.67.0(oxlint-tsgolint@0.23.0)(vite-plus@0.1.23(@types/node@24.13.1)(jiti@2.7.0)(typescript@6.0.3))
 
   '@manypkg/find-root@1.1.0':
     dependencies:
@@ -1539,32 +1539,32 @@ snapshots:
 
   '@types/node@12.20.55': {}
 
-  '@types/node@24.12.4':
+  '@types/node@24.13.1':
     dependencies:
-      undici-types: 7.16.0
+      undici-types: 7.18.2
 
-  '@voidzero-dev/vite-plus-core@0.1.23(@types/node@24.12.4)(jiti@2.6.1)(typescript@6.0.3)':
+  '@voidzero-dev/vite-plus-core@0.1.23(@types/node@24.13.1)(jiti@2.7.0)(typescript@6.0.3)':
     dependencies:
       '@oxc-project/runtime': 0.133.0
       '@oxc-project/types': 0.133.0
       lightningcss: 1.32.0
       postcss: 8.5.15
     optionalDependencies:
-      '@types/node': 24.12.4
+      '@types/node': 24.13.1
       fsevents: 2.3.3
-      jiti: 2.6.1
+      jiti: 2.7.0
       typescript: 6.0.3
 
-  '@voidzero-dev/vite-plus-core@0.1.24(@types/node@24.12.4)(jiti@2.6.1)(typescript@6.0.3)':
+  '@voidzero-dev/vite-plus-core@0.1.24(@types/node@24.13.1)(jiti@2.7.0)(typescript@6.0.3)':
     dependencies:
       '@oxc-project/runtime': 0.133.0
       '@oxc-project/types': 0.133.0
       lightningcss: 1.32.0
       postcss: 8.5.15
     optionalDependencies:
-      '@types/node': 24.12.4
+      '@types/node': 24.13.1
       fsevents: 2.3.3
-      jiti: 2.6.1
+      jiti: 2.7.0
       typescript: 6.0.3
 
   '@voidzero-dev/vite-plus-darwin-arm64@0.1.23':
@@ -1585,11 +1585,11 @@ snapshots:
   '@voidzero-dev/vite-plus-linux-x64-musl@0.1.23':
     optional: true
 
-  '@voidzero-dev/vite-plus-test@0.1.23(@types/node@24.12.4)(jiti@2.6.1)(typescript@6.0.3)':
+  '@voidzero-dev/vite-plus-test@0.1.23(@types/node@24.13.1)(jiti@2.7.0)(typescript@6.0.3)':
     dependencies:
       '@standard-schema/spec': 1.1.0
       '@types/chai': 5.2.3
-      '@voidzero-dev/vite-plus-core': 0.1.23(@types/node@24.12.4)(jiti@2.6.1)(typescript@6.0.3)
+      '@voidzero-dev/vite-plus-core': 0.1.23(@types/node@24.13.1)(jiti@2.7.0)(typescript@6.0.3)
       es-module-lexer: 1.7.0
       obug: 2.1.2
       pixelmatch: 7.2.0
@@ -1599,10 +1599,10 @@ snapshots:
       tinybench: 2.9.0
       tinyexec: 1.2.4
       tinyglobby: 0.2.17
-      vite: '@voidzero-dev/vite-plus-core@0.1.24(@types/node@24.12.4)(jiti@2.6.1)(typescript@6.0.3)'
+      vite: '@voidzero-dev/vite-plus-core@0.1.24(@types/node@24.13.1)(jiti@2.7.0)(typescript@6.0.3)'
       ws: 8.21.0
     optionalDependencies:
-      '@types/node': 24.12.4
+      '@types/node': 24.13.1
     transitivePeerDependencies:
       - '@arethetypeswrong/core'
       - '@tsdown/css'
@@ -1765,7 +1765,7 @@ snapshots:
 
   isexe@2.0.0: {}
 
-  jiti@2.6.1: {}
+  jiti@2.7.0: {}
 
   js-yaml@3.14.2:
     dependencies:
@@ -1856,7 +1856,7 @@ snapshots:
 
   outdent@0.5.0: {}
 
-  oxfmt@0.52.0(vite-plus@0.1.23(@types/node@24.12.4)(jiti@2.6.1)(typescript@6.0.3)):
+  oxfmt@0.52.0(vite-plus@0.1.23(@types/node@24.13.1)(jiti@2.7.0)(typescript@6.0.3)):
     dependencies:
       tinypool: 2.1.0
     optionalDependencies:
@@ -1879,7 +1879,7 @@ snapshots:
       '@oxfmt/binding-win32-arm64-msvc': 0.52.0
       '@oxfmt/binding-win32-ia32-msvc': 0.52.0
       '@oxfmt/binding-win32-x64-msvc': 0.52.0
-      vite-plus: 0.1.23(@types/node@24.12.4)(jiti@2.6.1)(typescript@6.0.3)
+      vite-plus: 0.1.23(@types/node@24.13.1)(jiti@2.7.0)(typescript@6.0.3)
 
   oxlint-tsgolint@0.23.0:
     optionalDependencies:
@@ -1890,7 +1890,7 @@ snapshots:
       '@oxlint-tsgolint/win32-arm64': 0.23.0
       '@oxlint-tsgolint/win32-x64': 0.23.0
 
-  oxlint@1.67.0(oxlint-tsgolint@0.23.0)(vite-plus@0.1.23(@types/node@24.12.4)(jiti@2.6.1)(typescript@6.0.3)):
+  oxlint@1.67.0(oxlint-tsgolint@0.23.0)(vite-plus@0.1.23(@types/node@24.13.1)(jiti@2.7.0)(typescript@6.0.3)):
     optionalDependencies:
       '@oxlint/binding-android-arm-eabi': 1.67.0
       '@oxlint/binding-android-arm64': 1.67.0
@@ -1912,7 +1912,7 @@ snapshots:
       '@oxlint/binding-win32-ia32-msvc': 1.67.0
       '@oxlint/binding-win32-x64-msvc': 1.67.0
       oxlint-tsgolint: 0.23.0
-      vite-plus: 0.1.23(@types/node@24.12.4)(jiti@2.6.1)(typescript@6.0.3)
+      vite-plus: 0.1.23(@types/node@24.13.1)(jiti@2.7.0)(typescript@6.0.3)
 
   p-filter@2.1.0:
     dependencies:
@@ -2041,18 +2041,18 @@ snapshots:
 
   typescript@6.0.3: {}
 
-  undici-types@7.16.0: {}
+  undici-types@7.18.2: {}
 
   universalify@0.1.2: {}
 
-  vite-plus@0.1.23(@types/node@24.12.4)(jiti@2.6.1)(typescript@6.0.3):
+  vite-plus@0.1.23(@types/node@24.13.1)(jiti@2.7.0)(typescript@6.0.3):
     dependencies:
       '@oxc-project/types': 0.133.0
       '@oxlint/plugins': 1.61.0
-      '@voidzero-dev/vite-plus-core': 0.1.23(@types/node@24.12.4)(jiti@2.6.1)(typescript@6.0.3)
-      '@voidzero-dev/vite-plus-test': 0.1.23(@types/node@24.12.4)(jiti@2.6.1)(typescript@6.0.3)
-      oxfmt: 0.52.0(vite-plus@0.1.23(@types/node@24.12.4)(jiti@2.6.1)(typescript@6.0.3))
-      oxlint: 1.67.0(oxlint-tsgolint@0.23.0)(vite-plus@0.1.23(@types/node@24.12.4)(jiti@2.6.1)(typescript@6.0.3))
+      '@voidzero-dev/vite-plus-core': 0.1.23(@types/node@24.13.1)(jiti@2.7.0)(typescript@6.0.3)
+      '@voidzero-dev/vite-plus-test': 0.1.23(@types/node@24.13.1)(jiti@2.7.0)(typescript@6.0.3)
+      oxfmt: 0.52.0(vite-plus@0.1.23(@types/node@24.13.1)(jiti@2.7.0)(typescript@6.0.3))
+      oxlint: 1.67.0(oxlint-tsgolint@0.23.0)(vite-plus@0.1.23(@types/node@24.13.1)(jiti@2.7.0)(typescript@6.0.3))
       oxlint-tsgolint: 0.23.0
     optionalDependencies:
       '@voidzero-dev/vite-plus-darwin-arm64': 0.1.23
