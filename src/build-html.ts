@@ -205,10 +205,10 @@ function styles(): string {
       background-repeat: no-repeat; background-position: right 9px center; background-size: 11px;
     }
     .filter-select:focus { border-color: var(--accent); }
-    .flags { display: inline-flex; gap: 4px; }
+    .flags { display: inline-flex; gap: 4px; flex-wrap: nowrap; white-space: nowrap; }
     .flag {
       font-size: 9px; padding: 1px 6px; border-radius: 999px; font-weight: 600;
-      text-transform: uppercase; letter-spacing: 0.04em;
+      text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap;
       background: var(--surface2); border: 1px solid var(--border); color: var(--muted);
     }
 
@@ -267,6 +267,8 @@ function styles(): string {
       /* Share width evenly so a long key column can't starve its value. */
       table { table-layout: fixed; }
       th, td { width: auto !important; padding: 8px 11px; }
+      /* On a cramped phone column, let the two flag pills stack as whole units. */
+      .flags { flex-wrap: wrap; white-space: normal; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -348,8 +350,8 @@ function clientScript(): string {
 
   function rulesTable(rules) {
     var head = '<table><thead><tr><th>Rule</th><th style="width:64px">Severity</th>' +
-      '<th style="width:130px">Source</th><th style="width:90px">Category</th>' +
-      '<th style="width:80px">Flags</th></tr></thead><tbody id="rules-body">';
+      '<th style="width:120px">Source</th><th style="width:104px">Category</th>' +
+      '<th style="width:118px">Flags</th></tr></thead><tbody id="rules-body">';
     var body = rules.map(function (r) {
       var name = r.docsUrl
         ? '<a class="rule-link" href="' + esc(r.docsUrl) + '" target="_blank" rel="noreferrer">' + esc(r.id) + '</a>'
