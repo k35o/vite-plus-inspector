@@ -15,63 +15,75 @@ function styles(): string {
     :root {
       --sans: system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
       --mono: ui-monospace, 'SF Mono', 'JetBrains Mono', 'Fira Code', Menlo, monospace;
-      --radius: 14px;
-      --radius-sm: 9px;
+      --radius: 0.75rem;
+      --radius-sm: 0.5rem;
 
-      /* Light palette — the primary design target. */
-      --bg: #f5f6f8;
-      --surface: #ffffff;
-      --surface2: #f1f3f6;
-      --border: #e6e8ec;
-      --text: #1a1d24;
-      --muted: #677084;
-      --accent: #0f766e;
-      --accent-strong: #0b5e57;
-      --accent-dim: #e3f3f0;
-      --error: #b42318; --error-bg: #fdecea;
-      --warn: #b54708;  --warn-bg: #fbf0e2;
-      --off: #667085;   --off-bg: #eef0f3;
-      --green: #067647; --blue: #175cd3; --yellow: #92500a;
-      --row-hover: #f8f9fb;
-      --shadow: 0 1px 2px rgba(16,24,40,0.04), 0 6px 16px rgba(16,24,40,0.06);
+      /* Raw palette — @k8o/arte-odyssey design tokens (OKLCH). */
+      --white: oklch(1 0 0);
+      --gray-50: oklch(0.975 0.001 235);  --gray-100: oklch(0.945 0.0015 235);
+      --gray-200: oklch(0.9 0.003 235);   --gray-300: oklch(0.84 0.004 235);
+      --gray-400: oklch(0.75 0.005 235);  --gray-500: oklch(0.66 0.006 235);
+      --gray-600: oklch(0.52 0.006 235);  --gray-700: oklch(0.42 0.003 235);
+      --gray-800: oklch(0.3 0.002 235);   --gray-900: oklch(0.25 0.0015 235);
+      --gray-950: oklch(0.18 0.001 235);
+      --teal-50: oklch(0.975 0.02 180);   --teal-300: oklch(0.84 0.16 180);
+      --teal-800: oklch(0.41 0.098 180);  --teal-950: oklch(0.18 0.055 180);
+      --red-100: oklch(0.945 0.042 25);   --red-200: oklch(0.9 0.084 25);
+      --red-800: oklch(0.41 0.18 25);     --red-900: oklch(0.37 0.14 25);
+      --yellow-100: oklch(0.945 0.08 90); --yellow-200: oklch(0.9 0.148 90);
+      --yellow-800: oklch(0.41 0.11 90);  --yellow-900: oklch(0.37 0.085 90);
+      --green-200: oklch(0.9 0.1 150);    --green-800: oklch(0.41 0.14 150);
+      --blue-200: oklch(0.9 0.078 260);   --blue-800: oklch(0.41 0.215 260);
+
+      /* Semantic tokens — light (arte-odyssey :root). */
+      --fg-base: var(--gray-900); --fg-subtle: var(--gray-400); --fg-mute: var(--gray-700);
+      --fg-error: var(--red-800); --fg-warning: var(--yellow-800);
+      --fg-success: var(--green-800); --fg-info: var(--blue-800);
+      --bg-base: var(--white); --bg-surface: var(--gray-50); --bg-subtle: var(--gray-100);
+      --bg-mute: var(--gray-200); --bg-error: var(--red-100); --bg-warning: var(--yellow-100);
+      --border-mute: var(--gray-200);
+      --primary-fg: var(--teal-800); --primary-bg-subtle: var(--teal-50);
+      --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.08);
+
+      /* Inspector aliases onto the semantic tokens (theme-independent). */
+      --bg: var(--bg-surface);
+      --surface: var(--bg-base);
+      --surface2: var(--bg-subtle);
+      --border: var(--border-mute);
+      --text: var(--fg-base);
+      --muted: var(--fg-mute);
+      --accent: var(--primary-fg);
+      --accent-strong: var(--primary-fg);
+      --accent-dim: var(--primary-bg-subtle);
+      --error: var(--fg-error); --error-bg: var(--bg-error);
+      --warn: var(--fg-warning); --warn-bg: var(--bg-warning);
+      --off: var(--fg-subtle); --off-bg: var(--bg-mute);
+      --green: var(--fg-success); --blue: var(--fg-info); --yellow: var(--fg-warning);
+      --row-hover: var(--bg-subtle);
     }
 
-    /* Dark — designed as an independent tone, not an inversion. */
+    /* Semantic tokens — dark (arte-odyssey .dark, an independent tone). */
     @media (prefers-color-scheme: dark) {
       :root:not([data-theme='light']) {
-        --bg: #14161b;
-        --surface: #1b1e25;
-        --surface2: #232730;
-        --border: #2c313b;
-        --text: #e7e9ed;
-        --muted: #939cab;
-        --accent: #2dd4bf;
-        --accent-strong: #5eead4;
-        --accent-dim: rgba(45,212,191,0.15);
-        --error: #f97066; --error-bg: rgba(249,112,102,0.14);
-        --warn: #fdb022;  --warn-bg: rgba(253,176,34,0.14);
-        --off: #98a2b3;   --off-bg: rgba(152,162,179,0.14);
-        --green: #6ce9a6; --blue: #84caff; --yellow: #fec84b;
-        --row-hover: rgba(255,255,255,0.03);
-        --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 20px rgba(0,0,0,0.34);
+        --fg-base: var(--gray-50); --fg-subtle: var(--gray-500); --fg-mute: var(--gray-300);
+        --fg-error: var(--red-200); --fg-warning: var(--yellow-200);
+        --fg-success: var(--green-200); --fg-info: var(--blue-200);
+        --bg-base: var(--gray-800); --bg-surface: var(--gray-950); --bg-subtle: var(--gray-900);
+        --bg-mute: var(--gray-700); --bg-error: var(--red-900); --bg-warning: var(--yellow-900);
+        --border-mute: var(--gray-600);
+        --primary-fg: var(--teal-300); --primary-bg-subtle: var(--teal-950);
+        --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
       }
     }
     :root[data-theme='dark'] {
-      --bg: #14161b;
-      --surface: #1b1e25;
-      --surface2: #232730;
-      --border: #2c313b;
-      --text: #e7e9ed;
-      --muted: #939cab;
-      --accent: #2dd4bf;
-      --accent-strong: #5eead4;
-      --accent-dim: rgba(45,212,191,0.15);
-      --error: #f97066; --error-bg: rgba(249,112,102,0.14);
-      --warn: #fdb022;  --warn-bg: rgba(253,176,34,0.14);
-      --off: #98a2b3;   --off-bg: rgba(152,162,179,0.14);
-      --green: #6ce9a6; --blue: #84caff; --yellow: #fec84b;
-      --row-hover: rgba(255,255,255,0.03);
-      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 20px rgba(0,0,0,0.34);
+      --fg-base: var(--gray-50); --fg-subtle: var(--gray-500); --fg-mute: var(--gray-300);
+      --fg-error: var(--red-200); --fg-warning: var(--yellow-200);
+      --fg-success: var(--green-200); --fg-info: var(--blue-200);
+      --bg-base: var(--gray-800); --bg-surface: var(--gray-950); --bg-subtle: var(--gray-900);
+      --bg-mute: var(--gray-700); --bg-error: var(--red-900); --bg-warning: var(--yellow-900);
+      --border-mute: var(--gray-600);
+      --primary-fg: var(--teal-300); --primary-bg-subtle: var(--teal-950);
+      --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
     }
 
     html, body { height: 100%; }
