@@ -92,3 +92,14 @@ export type ResolvedRule = {
   /** Link to oxc.rs rule docs, or null for plugins not documented there. */
   docsUrl: string | null;
 };
+
+/** A resolved rule enriched with catalog metadata (when a catalog is available). */
+export type EnrichedRule = ResolvedRule & {
+  plugin: string;
+  category: string | null;
+  typeAware: boolean;
+  fixable: boolean;
+  defaultOn: boolean;
+  /** True when the severity comes from an explicit rule entry (not a category baseline or default). */
+  configured: boolean;
+};

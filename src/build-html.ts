@@ -183,6 +183,19 @@ function styles(): string {
     }
     .filter-input:focus { border-color: var(--accent); }
     .filter-input::placeholder { color: var(--muted); font-family: var(--sans); }
+    .filter-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    .filter-select {
+      background: var(--bg); border: 1px solid var(--border); color: var(--text);
+      border-radius: var(--radius-sm); padding: 5px 9px; font-family: var(--sans);
+      font-size: 11px; cursor: pointer; outline: none;
+    }
+    .filter-select:focus { border-color: var(--accent); }
+    .flags { display: inline-flex; gap: 4px; }
+    .flag {
+      font-size: 9px; padding: 1px 6px; border-radius: 999px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.04em;
+      background: var(--surface2); border: 1px solid var(--border); color: var(--muted);
+    }
 
     .resolve-bar {
       padding: 14px 16px; border-bottom: 1px solid var(--border);
@@ -311,18 +324,33 @@ function clientScript(): string {
     return opts.map(function (o) { return esc(JSON.stringify(o)); }).join(', ');
   }
 
+  function flags(r) {
+    var out = '';
+    if (r.fixable) out += '<span class="flag" title="Auto-fixable">fix</span>';
+    if (r.typeAware) out += '<span class="flag" title="Requires type information">type</span>';
+    return out ? '<span class="flags">' + out + '</span>' : '';
+  }
+
   function rulesTable(rules) {
-    var head = '<table><thead><tr><th style="width:110px">Source</th><th>Rule</th>' +
-      '<th style="width:70px">Severity</th><th>Options</th></tr></thead><tbody id="rules-body">';
+    var head = '<table><thead><tr><th>Rule</th><th style="width:64px">Severity</th>' +
+      '<th style="width:130px">Source</th><th style="width:90px">Category</th>' +
+      '<th style="width:80px">Flags</th></tr></thead><tbody id="rules-body">';
     var body = rules.map(function (r) {
       var name = r.docsUrl
         ? '<a class="rule-link" href="' + esc(r.docsUrl) + '" target="_blank" rel="noreferrer">' + esc(r.id) + '</a>'
-        : esc(r.id);
-      return '<tr data-name="' + esc(r.id) + '" data-src="' + esc(r.source) + '">' +
-        '<td class="text-muted text-small">' + esc(r.source) + '</td>' +
-        '<td>' + name + '</td>' +
+        : '<span class="mono">' + esc(r.id) + '</span>';
+      var opts = optionsText(r.options);
+      var nameCell = name + (opts ? '<div class="text-muted text-small">' + opts + '</div>' : '');
+      return '<tr data-name="' + esc(r.id) + '" data-src="' + esc(r.source) + '"' +
+        ' data-sev="' + esc(r.severity) + '" data-plugin="' + esc(r.plugin || '') + '"' +
+        ' data-category="' + esc(r.category || '') + '" data-configured="' + (r.configured ? '1' : '0') + '"' +
+        ' data-default="' + (r.defaultOn ? '1' : '0') + '" data-fixable="' + (r.fixable ? '1' : '0') + '"' +
+        ' data-typeaware="' + (r.typeAware ? '1' : '0') + '">' +
+        '<td>' + nameCell + '</td>' +
         '<td>' + badge(r.severity, r.severity) + '</td>' +
-        '<td class="text-muted text-small">' + optionsText(r.options) + '</td></tr>';
+        '<td class="text-muted text-small">' + esc(r.source) + '</td>' +
+        '<td class="text-small">' + (r.category ? esc(r.category) : '<span class="text-muted">—</span>') + '</td>' +
+        '<td>' + flags(r) + '</td></tr>';
     }).join('');
     return head + body + '</tbody></table>';
   }
@@ -333,7 +361,7 @@ function clientScript(): string {
 
   function navBadge(id) {
     var l;
-    if (id === 'lint' && data.lint) return data.lint.baseRules.length;
+    if (id === 'lint' && data.lint) return data.lint.totalRules;
     if (id === 'fmt' && data.fmt) { l = Object.keys(data.fmt).filter(notMeta).length; return l || null; }
     if (id === 'staged' && data.staged) return Object.keys(data.staged).length;
     if (id === 'pack' && data.pack) return data.pack.length;
@@ -370,7 +398,7 @@ function clientScript(): string {
   function renderOverview() {
     var stats = [
       { id: 'fmt', sub: 'oxfmt formatting', val: data.fmt ? Object.keys(data.fmt).filter(notMeta).length + ' options' : '—' },
-      { id: 'lint', sub: 'oxlint linting', val: data.lint ? data.lint.baseRules.length + ' rules' : '—' },
+      { id: 'lint', sub: data.lint && data.lint.hasCatalog ? 'of ' + data.lint.totalRules + ' oxlint rules' : 'oxlint linting', val: data.lint ? (data.lint.counts.error + data.lint.counts.warn) + ' enabled' : '—' },
       { id: 'staged', sub: 'git staged hooks', val: data.staged ? Object.keys(data.staged).length + ' patterns' : '—' },
       { id: 'pack', sub: 'tsdown packaging', val: data.pack ? data.pack.length + ' build' + (data.pack.length === 1 ? '' : 's') : '—' },
       { id: 'test', sub: 'vitest testing', val: data.test ? 'configured' : '—' },
@@ -406,9 +434,19 @@ function clientScript(): string {
     return html;
   }
 
+  function selectEl(id, options) {
+    var opts = options.map(function (o) {
+      return '<option value="' + esc(o.value) + '">' + esc(o.label) + '</option>';
+    }).join('');
+    return '<select class="filter-select" id="' + id + '">' + opts + '</select>';
+  }
+
   function renderLint(lint) {
     if (!lint) return '<div class="empty">No lint config</div>';
-    var html = '<div class="section-title">lint</div><div class="section-desc">oxlint configuration — effective (resolved) severities</div>';
+    var desc = lint.hasCatalog
+      ? 'oxlint — effective severity of every registered rule (resolved from extends, categories, rules &amp; overrides)'
+      : 'oxlint configuration — declared rules only (run inside a vite-plus project for the full catalog)';
+    var html = '<div class="section-title">lint</div><div class="section-desc">' + desc + '</div>';
 
     if (Object.keys(lint.options).length) html += '<div class="card"><div class="card-header">Options</div>' + kvTable(lint.options, '300px') + '</div>';
 
@@ -432,13 +470,31 @@ function clientScript(): string {
       html += '</div>';
     }
 
-    html += '<div class="card"><div class="card-header">Rules <span class="nav-badge" id="rule-count">' + lint.baseRules.length + '</span>' +
+    html += '<div class="card"><div class="card-header">Rules <span class="nav-badge">' + lint.totalRules + '</span>' +
       '<div class="ml-auto" id="rule-counts">' + countsBadges(lint.counts) + '</div></div>';
     html += '<div class="resolve-bar"><span class="resolve-label">Resolve effective rules for a file path (applies matching overrides):</span>' +
-      '<input class="filter-input" id="resolve-input" placeholder="e.g. tests/foo.test.ts" />' +
+      '<input class="filter-input" id="resolve-input" placeholder="e.g. apps/main/foo.test.tsx" />' +
       '<span class="resolve-status text-muted" id="resolve-status"></span></div>';
-    html += '<div class="filter-wrap"><input class="filter-input" id="filter-input" placeholder="Filter rules by name or source…" /></div>';
-    html += '<div id="rules-container">' + rulesTable(lint.baseRules) + '</div></div>';
+    var showOpts = [
+      { value: 'enabled', label: 'Enabled (error + warn)' },
+      { value: 'all', label: 'All rules' },
+      { value: 'error', label: 'Errors' },
+      { value: 'warn', label: 'Warnings' },
+      { value: 'off', label: 'Off' },
+      { value: 'configured', label: 'Explicitly configured' },
+      { value: 'recommended-off', label: 'Default-on but disabled' },
+    ];
+    var pluginOpts = [{ value: 'all', label: 'All plugins' }].concat(
+      lint.facets.plugins.map(function (p) { return { value: p, label: p }; }),
+    );
+    var catOpts = [{ value: 'all', label: 'All categories' }].concat(
+      lint.facets.categories.map(function (c) { return { value: c, label: c }; }),
+    );
+    html += '<div class="filter-wrap">' +
+      '<input class="filter-input" id="filter-input" placeholder="Filter by rule or source…" />' +
+      '<div class="filter-row">' + selectEl('f-show', showOpts) + selectEl('f-plugin', pluginOpts) + selectEl('f-category', catOpts) + '</div>' +
+      '<div class="text-small text-muted" id="rule-visible" style="margin-top:8px"></div></div>';
+    html += '<div id="rules-container">' + rulesTable(lint.rules) + '</div></div>';
 
     if (lint.overrides.length) {
       html += '<div class="card"><div class="card-header">Overrides <span class="nav-badge">' + lint.overrides.length + '</span></div>';
@@ -456,27 +512,44 @@ function clientScript(): string {
   }
 
   function wireLint() {
-    var filter = document.getElementById('filter-input');
-    if (filter) filter.addEventListener('input', applyFilter);
+    var ids = ['filter-input', 'f-show', 'f-plugin', 'f-category'];
+    ids.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.addEventListener(id === 'filter-input' ? 'input' : 'change', applyFilter);
+    });
     var resolve = document.getElementById('resolve-input');
     if (resolve) resolve.addEventListener('input', debounce(onResolve, 200));
+    applyFilter();
   }
 
+  function val(id) { var el = document.getElementById(id); return el ? el.value : ''; }
+
   function applyFilter() {
-    var input = document.getElementById('filter-input');
-    if (!input) return;
-    var q = input.value.toLowerCase();
+    var q = val('filter-input').toLowerCase();
+    var show = val('f-show') || 'all';
+    var plugin = val('f-plugin') || 'all';
+    var cat = val('f-category') || 'all';
     var rows = document.querySelectorAll('#rules-body tr');
     var visible = 0;
     rows.forEach(function (row) {
       var name = (row.getAttribute('data-name') || '').toLowerCase();
       var src = (row.getAttribute('data-src') || '').toLowerCase();
-      var show = !q || name.indexOf(q) !== -1 || src.indexOf(q) !== -1;
-      row.style.display = show ? '' : 'none';
-      if (show) visible++;
+      var sev = row.getAttribute('data-sev');
+      var matchText = !q || name.indexOf(q) !== -1 || src.indexOf(q) !== -1;
+      var matchShow =
+        show === 'all' ? true :
+        show === 'enabled' ? (sev === 'error' || sev === 'warn') :
+        show === 'configured' ? row.getAttribute('data-configured') === '1' :
+        show === 'recommended-off' ? (row.getAttribute('data-default') === '1' && sev === 'off') :
+        sev === show;
+      var matchPlugin = plugin === 'all' || row.getAttribute('data-plugin') === plugin;
+      var matchCat = cat === 'all' || row.getAttribute('data-category') === cat;
+      var ok = matchText && matchShow && matchPlugin && matchCat;
+      row.style.display = ok ? '' : 'none';
+      if (ok) visible++;
     });
-    var counter = document.getElementById('rule-count');
-    if (counter) counter.textContent = String(visible);
+    var info = document.getElementById('rule-visible');
+    if (info) info.textContent = 'Showing ' + visible + ' of ' + rows.length + ' rules';
   }
 
   function onResolve() {
@@ -484,15 +557,13 @@ function clientScript(): string {
     var status = document.getElementById('resolve-status');
     var container = document.getElementById('rules-container');
     var counts = document.getElementById('rule-counts');
-    var counter = document.getElementById('rule-count');
     if (!input || !container) return;
     var file = input.value.trim();
     if (!file) {
-      container.innerHTML = rulesTable(data.lint.baseRules);
+      container.innerHTML = rulesTable(data.lint.rules);
       if (status) status.textContent = '';
       if (counts) counts.innerHTML = countsBadges(data.lint.counts);
-      if (counter) counter.textContent = String(data.lint.baseRules.length);
-      var f = document.getElementById('filter-input'); if (f) f.value = '';
+      applyFilter();
       return;
     }
     fetch('/__resolve?file=' + encodeURIComponent(file)).then(function (r) { return r.json(); }).then(function (res) {
@@ -500,12 +571,12 @@ function clientScript(): string {
       var c = { error: 0, warn: 0, off: 0 };
       res.rules.forEach(function (r) { c[r.severity]++; });
       if (counts) counts.innerHTML = countsBadges(c);
-      if (counter) counter.textContent = String(res.rules.length);
       if (status) {
         status.innerHTML = res.matchedOverrides.length
           ? 'Matched overrides: ' + tags(res.matchedOverrides)
           : 'No overrides matched — base config applies.';
       }
+      applyFilter();
     }).catch(function () { if (status) status.textContent = 'Failed to resolve.'; });
   }
 
@@ -627,6 +698,13 @@ function clientScript(): string {
       applyTheme(next);
     });
     applyTheme(readTheme());
+  }
+
+  if (window.EventSource) {
+    try {
+      var es = new EventSource('/__events');
+      es.onmessage = function () { location.reload(); };
+    } catch (e) {}
   }
 
   renderNav();

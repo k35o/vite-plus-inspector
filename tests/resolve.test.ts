@@ -1,18 +1,40 @@
+import type { RuleMeta } from '../src/catalog.ts';
 import {
   countPresetRules,
   flattenExtends,
   globToRegExp,
   inferPresetLabel,
+  matchedOverridesFor,
   matchesFiles,
   normalizeSeverity,
   resolveBaseRules,
   resolveCategories,
+  resolveEffective,
   resolveForFile,
   resolvePlugins,
   ruleDocsUrl,
   ruleOptions,
 } from '../src/resolve.ts';
 import type { LintNode } from '../src/types.ts';
+
+function meta(
+  id: string,
+  category: string,
+  extra: Partial<RuleMeta> = {},
+): RuleMeta {
+  const plugin = id.includes('/') ? id.slice(0, id.indexOf('/')) : 'eslint';
+  return {
+    id,
+    plugin,
+    category,
+    typeAware: false,
+    fixable: false,
+    fix: 'none',
+    defaultOn: false,
+    docsUrl: `https://oxc.rs/${id}`,
+    ...extra,
+  };
+}
 
 describe('normalizeSeverity', () => {
   test('maps error synonyms', () => {
@@ -212,6 +234,68 @@ describe('resolveForFile', () => {
     const byId = Object.fromEntries(res.rules.map((r) => [r.id, r]));
     expect(res.matchedOverrides).toEqual([]);
     expect(byId['no-console']?.severity).toBe('error');
+  });
+});
+
+describe('resolveEffective (with catalog)', () => {
+  const lint: LintNode = {
+    extends: [
+      {
+        plugins: ['eslint', 'unicorn'],
+        categories: { correctness: 'error', style: 'off' },
+        rules: { 'no-console': 'warn' },
+      },
+    ],
+    overrides: [{ files: ['**/*.test.ts'], rules: { 'no-console': 'off' } }],
+  };
+  // no-console: explicitly set -> warn; no-debugger: via category -> error;
+  // unicorn/no-null: via category 'style' -> off; unicorn/prefer-at: nursery off.
+  const catalog: RuleMeta[] = [
+    meta('no-console', 'suspicious'),
+    meta('no-debugger', 'correctness'),
+    meta('unicorn/no-null', 'style', { fixable: true }),
+    meta('unicorn/prefer-at', 'nursery'),
+  ];
+
+  test('derives severity from rule, then category, then default', () => {
+    const byId = Object.fromEntries(
+      resolveEffective(lint, catalog).map((r) => [r.id, r]),
+    );
+    expect(byId['no-console']?.severity).toBe('warn');
+    expect(byId['no-console']?.configured).toBe(true);
+    expect(byId['no-debugger']?.severity).toBe('error');
+    expect(byId['no-debugger']?.source).toBe('category: correctness');
+    expect(byId['unicorn/no-null']?.severity).toBe('off');
+    expect(byId['unicorn/no-null']?.source).toBe('category: style');
+    expect(byId['unicorn/prefer-at']?.severity).toBe('off');
+  });
+
+  test('carries catalog metadata onto rules', () => {
+    const byId = Object.fromEntries(
+      resolveEffective(lint, catalog).map((r) => [r.id, r]),
+    );
+    expect(byId['unicorn/no-null']?.fixable).toBe(true);
+    expect(byId['unicorn/no-null']?.plugin).toBe('unicorn');
+    expect(byId['no-debugger']?.docsUrl).toBe('https://oxc.rs/no-debugger');
+  });
+
+  test('applies overrides for a file path', () => {
+    const byId = Object.fromEntries(
+      resolveEffective(lint, catalog, 'a/b.test.ts').map((r) => [r.id, r]),
+    );
+    expect(byId['no-console']?.severity).toBe('off');
+    expect(byId['no-console']?.source).toContain('override');
+    expect(matchedOverridesFor(lint, 'a/b.test.ts')).toEqual(['**/*.test.ts']);
+  });
+
+  test('includes configured rules absent from the catalog', () => {
+    const withTw: LintNode = {
+      extends: [{ rules: { 'tailwindcss/no-arbitrary-value': 'error' } }],
+    };
+    const rules = resolveEffective(withTw, catalog);
+    const tw = rules.find((r) => r.id === 'tailwindcss/no-arbitrary-value');
+    expect(tw?.severity).toBe('error');
+    expect(tw?.category).toBeNull();
   });
 });
 

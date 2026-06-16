@@ -30,10 +30,41 @@ describe('buildLintView', () => {
     expect(view.presets[0]?.ruleCount).toBe(2);
   });
 
-  test('computes effective base rules and counts', () => {
-    expect(view.baseRules).toHaveLength(2);
+  test('computes effective base rules and counts (no catalog)', () => {
+    expect(view.rules).toHaveLength(2);
     expect(view.counts.error).toBe(1);
     expect(view.counts.warn).toBe(1);
+    expect(view.hasCatalog).toBe(false);
+    expect(view.configuredCount).toBe(2);
+  });
+
+  test('enriches rules from a catalog when provided', () => {
+    const enriched = buildLintView({}, [
+      {
+        id: 'no-console',
+        plugin: 'eslint',
+        category: 'suspicious',
+        typeAware: false,
+        fixable: false,
+        fix: 'none',
+        defaultOn: false,
+        docsUrl: 'https://oxc.rs/x',
+      },
+      {
+        id: 'unicorn/no-null',
+        plugin: 'unicorn',
+        category: 'style',
+        typeAware: false,
+        fixable: true,
+        fix: 'fixable_fix',
+        defaultOn: false,
+        docsUrl: 'https://oxc.rs/y',
+      },
+    ]);
+    expect(enriched.hasCatalog).toBe(true);
+    expect(enriched.totalRules).toBe(2);
+    expect(enriched.facets.plugins).toContain('unicorn');
+    expect(enriched.facets.categories).toContain('style');
   });
 
   test('summarizes overrides', () => {
@@ -88,6 +119,6 @@ describe('buildInspectorData', () => {
   });
 
   test('builds a lint view when lint is present', () => {
-    expect(data.lint?.baseRules.length).toBeGreaterThan(0);
+    expect(data.lint?.rules.length).toBeGreaterThan(0);
   });
 });
