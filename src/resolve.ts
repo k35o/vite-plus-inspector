@@ -325,8 +325,9 @@ export function resolveEffective(
     } else {
       const fromCategory = categories[meta.category];
       if (fromCategory === undefined) {
-        severity = 'off';
-        source = meta.defaultOn ? 'default (on)' : 'default';
+        // No category override: oxlint still enables its default-on rules.
+        severity = meta.defaultOn ? 'warn' : 'off';
+        source = meta.defaultOn ? 'default' : 'off';
       } else {
         severity = fromCategory;
         source = `category: ${meta.category}`;

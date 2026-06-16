@@ -250,12 +250,15 @@ describe('resolveEffective (with catalog)', () => {
     overrides: [{ files: ['**/*.test.ts'], rules: { 'no-console': 'off' } }],
   };
   // no-console: explicitly set -> warn; no-debugger: via category -> error;
-  // unicorn/no-null: via category 'style' -> off; unicorn/prefer-at: nursery off.
+  // unicorn/no-null: via category 'style' -> off; unicorn/prefer-at: nursery,
+  // unconfigured + not default-on -> off; unicorn/no-await: nursery but
+  // default-on -> warn (oxlint enables it by default).
   const catalog: RuleMeta[] = [
     meta('no-console', 'suspicious'),
     meta('no-debugger', 'correctness'),
     meta('unicorn/no-null', 'style', { fixable: true }),
     meta('unicorn/prefer-at', 'nursery'),
+    meta('unicorn/no-await', 'nursery', { defaultOn: true }),
   ];
 
   test('derives severity from rule, then category, then default', () => {
@@ -269,6 +272,8 @@ describe('resolveEffective (with catalog)', () => {
     expect(byId['unicorn/no-null']?.severity).toBe('off');
     expect(byId['unicorn/no-null']?.source).toBe('category: style');
     expect(byId['unicorn/prefer-at']?.severity).toBe('off');
+    expect(byId['unicorn/no-await']?.severity).toBe('warn');
+    expect(byId['unicorn/no-await']?.source).toBe('default');
   });
 
   test('carries catalog metadata onto rules', () => {

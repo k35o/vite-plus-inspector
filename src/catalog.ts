@@ -65,6 +65,20 @@ function toRuleMeta(raw: RawRule): RuleMeta {
 }
 
 /**
+ * Pull the top-level JSON array out of `vp lint --rules` output, which is
+ * prefixed by a `VITE+ …` banner. The pretty-printed array opens with `[` at
+ * the start of a line, so anchor on that rather than the first `[` anywhere
+ * (a banner or diagnostic line could contain one).
+ */
+export function extractJsonArray(out: string): string | null {
+  const match = /^\[/mu.exec(out);
+  const start = match ? match.index : out.indexOf('[');
+  const end = out.lastIndexOf(']');
+  if (start === -1 || end === -1 || end < start) return null;
+  return out.slice(start, end + 1);
+}
+
+/**
  * Load the full oxlint rule catalog by invoking `vp lint --rules --format=json`
  * in the target project. Returns null if vp is unavailable or the output can't
  * be parsed — the inspector degrades to showing only declared rules.
@@ -76,9 +90,9 @@ export async function loadCatalog(root: string): Promise<RuleMeta[] | null> {
       ['lint', '--rules', '--format=json'],
       root,
     );
-    const start = stdout.indexOf('[');
-    if (start === -1) return null;
-    const raw = JSON.parse(stdout.slice(start)) as RawRule[];
+    const json = extractJsonArray(stdout);
+    if (json === null) return null;
+    const raw = JSON.parse(json) as RawRule[];
     if (!Array.isArray(raw)) return null;
     return raw.map((rule) => toRuleMeta(rule));
   } catch {

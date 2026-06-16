@@ -775,10 +775,10 @@ function clientScript(): string {
 }
 
 export function buildHtml(data: InspectorData): string {
-  const dataJson = JSON.stringify(data).replaceAll(
-    /<\/script>/giu,
-    '<\\/script>',
-  );
+  // Escape every '<' as < so no '</script', '<!--', etc. can break out of
+  // the inline <script>. '<' only appears inside the object literal's string
+  // values, where < parses back to '<'.
+  const dataJson = JSON.stringify(data).replaceAll('<', '\\u003c');
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
