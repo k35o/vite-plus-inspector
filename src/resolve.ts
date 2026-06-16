@@ -1,4 +1,6 @@
+import type { RuleMeta } from './catalog.ts';
 import type {
+  EnrichedRule,
   LintNode,
   LintOverride,
   ResolvedRule,
@@ -257,4 +259,118 @@ export function countPresetRules(node: LintNode): number {
     for (const id of Object.keys(n.rules ?? {})) ids.add(id);
   }
   return ids.size;
+}
+
+/** The override globs that match a given file path, in declaration order. */
+export function matchedOverridesFor(
+  lint: LintNode,
+  filePath: string,
+): string[] {
+  const matched: string[] = [];
+  for (const override of lint.overrides ?? []) {
+    if (matchesFiles(override.files, filePath)) {
+      matched.push(
+        Array.isArray(override.files)
+          ? override.files.join(', ')
+          : override.files,
+      );
+    }
+  }
+  return matched;
+}
+
+function applyMatchingOverrides(
+  map: Map<string, Winner>,
+  lint: LintNode,
+  filePath: string,
+): void {
+  for (const override of lint.overrides ?? []) {
+    if (matchesFiles(override.files, filePath)) {
+      const label = Array.isArray(override.files)
+        ? override.files.join(', ')
+        : override.files;
+      applyRules(map, override.rules, `override: ${label}`);
+    }
+  }
+}
+
+/**
+ * Resolve the effective state of EVERY rule in the catalog (plus any configured
+ * rules not in the catalog, e.g. JS-plugin rules). Each rule's severity comes
+ * from, in order of precedence: an explicit rule entry, its category baseline,
+ * or off. Pass a file path to also layer in matching overrides.
+ */
+export function resolveEffective(
+  lint: LintNode,
+  catalog: RuleMeta[],
+  filePath = '',
+): EnrichedRule[] {
+  const winners = baseWinners(lint);
+  if (filePath.length > 0) applyMatchingOverrides(winners, lint, filePath);
+  const categories = resolveCategories(lint);
+
+  const out: EnrichedRule[] = [];
+  const seen = new Set<string>();
+
+  for (const meta of catalog) {
+    seen.add(meta.id);
+    const win = winners.get(meta.id);
+    let severity: Severity;
+    let source: string;
+    let configured = false;
+    if (win) {
+      severity = normalizeSeverity(win.value);
+      ({ source } = win);
+      configured = true;
+    } else {
+      const fromCategory = categories[meta.category];
+      if (fromCategory === undefined) {
+        severity = 'off';
+        source = meta.defaultOn ? 'default (on)' : 'default';
+      } else {
+        severity = fromCategory;
+        source = `category: ${meta.category}`;
+      }
+    }
+    out.push({
+      id: meta.id,
+      severity,
+      options: win ? ruleOptions(win.value) : [],
+      source,
+      docsUrl: meta.docsUrl,
+      plugin: meta.plugin,
+      category: meta.category,
+      typeAware: meta.typeAware,
+      fixable: meta.fixable,
+      defaultOn: meta.defaultOn,
+      configured,
+    });
+  }
+
+  // Configured rules with no catalog entry (e.g. `tailwindcss/*` JS plugin).
+  for (const [id, win] of winners) {
+    if (seen.has(id)) continue;
+    out.push({
+      id,
+      severity: normalizeSeverity(win.value),
+      options: ruleOptions(win.value),
+      source: win.source,
+      docsUrl: ruleDocsUrl(id),
+      plugin: id.includes('/') ? id.slice(0, id.indexOf('/')) : 'eslint',
+      category: null,
+      typeAware: false,
+      fixable: false,
+      defaultOn: false,
+      configured: true,
+    });
+  }
+
+  const order: Record<Severity, number> = { error: 0, warn: 1, off: 2 };
+  out.sort(
+    (a, b) =>
+      order[a.severity] - order[b.severity] ||
+      Number(b.configured) - Number(a.configured) ||
+      a.id.localeCompare(b.id),
+  );
+  return out;
 }

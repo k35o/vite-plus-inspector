@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process';
 
 import { cac } from 'cac';
 
+import { loadCatalog } from './catalog.ts';
 import { configPathFor, loadConfig } from './load-config.ts';
 import { startServer } from './server.ts';
 
@@ -19,29 +20,38 @@ cli
     default: process.env['PORT'] ?? DEFAULT_PORT,
   })
   .option('--no-open', 'Do not open the browser automatically')
+  .option('--no-watch', 'Do not reload when vite.config.ts changes')
   .action(
     async (
       root: string | undefined,
-      options: { port: string | number; open: boolean },
+      options: { port: string | number; open: boolean; watch: boolean },
     ) => {
       const target = root ?? '.';
       const configPath = configPathFor(target);
 
       process.stdout.write(`Loading ${configPath}\n`);
 
-      let config;
       try {
-        config = await loadConfig(target);
+        await loadConfig(target);
       } catch (error) {
         process.stderr.write(`vp-inspect: ${(error as Error).message}\n`);
         process.exit(1);
       }
 
-      const { url } = await startServer(
-        config,
+      const catalog = await loadCatalog(target);
+      if (!catalog) {
+        process.stdout.write(
+          'vp-inspect: rule catalog unavailable (vp not found) — showing declared rules only\n',
+        );
+      }
+
+      const { url } = await startServer({
         configPath,
-        Number(options.port),
-      );
+        catalog,
+        port: Number(options.port),
+        watch: options.watch,
+        loadConfig: () => loadConfig(target),
+      });
       process.stdout.write(
         `\n  Vite+ Inspector  ${url}\n\n  Press Ctrl+C to stop.\n\n`,
       );
