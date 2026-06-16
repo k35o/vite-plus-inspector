@@ -11,6 +11,7 @@ import {
   resolveCategories,
   resolveEffective,
   resolveForFile,
+  resolveOverride,
   resolvePlugins,
   ruleDocsUrl,
   ruleOptions,
@@ -296,6 +297,24 @@ describe('resolveEffective (with catalog)', () => {
     const tw = rules.find((r) => r.id === 'tailwindcss/no-arbitrary-value');
     expect(tw?.severity).toBe('error');
     expect(tw?.category).toBeNull();
+  });
+});
+
+describe('resolveOverride', () => {
+  test('enriches an override’s rules with catalog metadata and a source label', () => {
+    const rules = resolveOverride(
+      ['**/*.test.ts', '**/*.spec.ts'],
+      { 'no-console': 'off', 'unicorn/no-null': 'error' },
+      [meta('unicorn/no-null', 'style', { fixable: true })],
+    );
+    const byId = Object.fromEntries(rules.map((r) => [r.id, r]));
+    expect(byId['no-console']?.severity).toBe('off');
+    expect(byId['no-console']?.source).toBe(
+      'override: **/*.test.ts, **/*.spec.ts',
+    );
+    expect(byId['unicorn/no-null']?.severity).toBe('error');
+    expect(byId['unicorn/no-null']?.fixable).toBe(true);
+    expect(byId['unicorn/no-null']?.category).toBe('style');
   });
 });
 

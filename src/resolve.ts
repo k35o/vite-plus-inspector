@@ -374,3 +374,45 @@ export function resolveEffective(
   );
   return out;
 }
+
+function enrichConfigured(
+  id: string,
+  value: RuleValue,
+  source: string,
+  index: Map<string, RuleMeta>,
+): EnrichedRule {
+  const m = index.get(id);
+  return {
+    id,
+    severity: normalizeSeverity(value),
+    options: ruleOptions(value),
+    source,
+    docsUrl: m ? m.docsUrl : ruleDocsUrl(id),
+    plugin: m
+      ? m.plugin
+      : id.includes('/')
+        ? id.slice(0, id.indexOf('/'))
+        : 'eslint',
+    category: m ? m.category : null,
+    typeAware: m ? m.typeAware : false,
+    fixable: m ? m.fixable : false,
+    defaultOn: m ? m.defaultOn : false,
+    configured: true,
+  };
+}
+
+/**
+ * The enriched rules a single override contributes (used to overlay onto the
+ * base config when resolving a file path entirely client-side).
+ */
+export function resolveOverride(
+  files: string[],
+  rules: Record<string, RuleValue>,
+  catalog: RuleMeta[],
+): EnrichedRule[] {
+  const index = new Map(catalog.map((m) => [m.id, m]));
+  const label = files.join(', ');
+  return Object.entries(rules).map(([id, value]) =>
+    enrichConfigured(id, value, `override: ${label}`, index),
+  );
+}

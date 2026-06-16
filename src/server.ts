@@ -5,11 +5,6 @@ import { basename, dirname } from 'node:path';
 import { buildHtml } from './build-html.ts';
 import type { RuleMeta } from './catalog.ts';
 import { buildInspectorData } from './model.ts';
-import {
-  matchedOverridesFor,
-  resolveEffective,
-  resolveForFile,
-} from './resolve.ts';
 import type { VitePlusConfig } from './types.ts';
 
 export type InspectorServer = {
@@ -31,27 +26,12 @@ const JSON_HEADERS = {
   'Cache-Control': 'no-store',
 };
 
-function resolveRules(
-  config: VitePlusConfig,
-  catalog: RuleMeta[] | null,
-  file: string,
-): unknown {
-  if (!config.lint) return { file, matchedOverrides: [], rules: [] };
-  if (catalog && catalog.length > 0) {
-    return {
-      file,
-      matchedOverrides: matchedOverridesFor(config.lint, file),
-      rules: resolveEffective(config.lint, catalog, file),
-    };
-  }
-  return resolveForFile(config.lint, file);
-}
-
 /**
  * Start the inspector HTTP server. Serves the rendered page at `/`, the
- * view-model at `/__config.json`, per-file rule resolution at `/__resolve`,
- * and a live-reload stream at `/__events`. When `watch` is on, edits to
- * `vite.config.ts` rebuild the view-model and push a reload to open tabs.
+ * view-model at `/__config.json`, and a live-reload stream at `/__events`.
+ * Per-file rule resolution happens client-side from embedded data, so the
+ * rendered page also works as a standalone static file. When `watch` is on,
+ * edits to `vite.config.ts` rebuild the view-model and reload open tabs.
  */
 export async function startServer(
   opts: StartOptions,
@@ -67,20 +47,6 @@ export async function startServer(
     if (url.pathname === '/__config.json') {
       res.writeHead(200, JSON_HEADERS);
       res.end(JSON.stringify(data));
-      return;
-    }
-
-    if (url.pathname === '/__resolve') {
-      res.writeHead(200, JSON_HEADERS);
-      res.end(
-        JSON.stringify(
-          resolveRules(
-            config,
-            opts.catalog,
-            url.searchParams.get('file') ?? '',
-          ),
-        ),
-      );
       return;
     }
 
