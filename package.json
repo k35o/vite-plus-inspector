@@ -2,7 +2,15 @@
   "name": "vite-plus-inspector",
   "version": "0.0.0",
   "description": "Visualize your vite-plus configuration",
-  "keywords": [],
+  "keywords": [
+    "cli",
+    "config",
+    "inspector",
+    "oxlint",
+    "visualizer",
+    "vite",
+    "vite-plus"
+  ],
   "homepage": "https://github.com/k35o/vite-plus-inspector#readme",
   "bugs": "https://github.com/k35o/vite-plus-inspector/issues",
   "license": "MIT",
@@ -11,6 +19,9 @@
     "type": "git",
     "url": "git+https://github.com/k35o/vite-plus-inspector.git"
   },
+  "bin": {
+    "vp-inspect": "./dist/cli.mjs"
+  },
   "files": [
     "dist",
     "README.md",
@@ -18,16 +29,6 @@
     "CHANGELOG.md"
   ],
   "type": "module",
-  "sideEffects": false,
-  "exports": {
-    ".": {
-      "import": {
-        "types": "./dist/index.d.mts",
-        "default": "./dist/index.mjs"
-      }
-    },
-    "./package.json": "./package.json"
-  },
   "publishConfig": {
     "access": "public",
     "provenance": true
@@ -43,7 +44,12 @@
     "changeset": "changeset",
     "version": "changeset version",
     "release": "pnpm build && changeset publish",
-    "prepublishOnly": "pnpm build"
+    "prepublishOnly": "pnpm build",
+    "prepare": "vp config"
+  },
+  "dependencies": {
+    "cac": "7.0.0",
+    "jiti": "2.6.1"
   },
   "devDependencies": {
     "@changesets/changelog-github": "0.7.0",
