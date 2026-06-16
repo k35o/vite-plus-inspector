@@ -18,14 +18,22 @@ export default defineConfig({
         plugins: [...(test.plugins ?? [])],
         rules: test.rules ?? {},
       },
+      {
+        // The CLI legitimately writes progress to the terminal.
+        files: ['src/cli.ts'],
+        rules: {
+          'no-console': 'off',
+        },
+      },
     ],
   },
   pack: {
-    entry: ['src/index.ts'],
+    entry: { cli: 'src/cli.ts' },
     format: 'esm',
-    dts: true,
+    dts: false,
     outDir: 'dist',
-    unbundle: true,
+    platform: 'node',
+    clean: true,
   },
   test: {
     globals: true,
