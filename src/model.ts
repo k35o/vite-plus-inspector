@@ -5,6 +5,7 @@ import {
   resolveBaseRules,
   resolveCategories,
   resolveEffective,
+  resolveOverride,
   resolvePlugins,
 } from './resolve.ts';
 import type {
@@ -38,6 +39,8 @@ export type LintView = {
   rules: EnrichedRule[];
   overrides: OverrideSummary[];
   counts: { error: number; warn: number; off: number };
+  /** Per-override enriched rules, for resolving a file path client-side. */
+  resolve: { overrides: Array<{ files: string[]; rules: EnrichedRule[] }> };
   /** Distinct plugins and categories present in `rules`, for filter menus. */
   facets: { plugins: string[]; categories: string[] };
   /** Whether the full oxlint rule catalog was available. */
@@ -111,10 +114,20 @@ export function buildLintView(
       ? resolveEffective(lint, catalog)
       : resolveBaseRules(lint).map((rule) => withoutCatalog(rule));
 
-  const overrides: OverrideSummary[] = (lint.overrides ?? []).map((o) => ({
+  const overrideList = (lint.overrides ?? []).map((o) => ({
     files: Array.isArray(o.files) ? o.files : [o.files],
-    ruleCount: Object.keys(o.rules ?? {}).length,
+    rules: o.rules ?? {},
   }));
+  const overrides: OverrideSummary[] = overrideList.map((o) => ({
+    files: o.files,
+    ruleCount: Object.keys(o.rules).length,
+  }));
+  const resolve = {
+    overrides: overrideList.map((o) => ({
+      files: o.files,
+      rules: resolveOverride(o.files, o.rules, catalog ?? []),
+    })),
+  };
 
   const plugins = [...new Set(rules.map((r) => r.plugin))].toSorted((a, b) =>
     a.localeCompare(b),
@@ -135,6 +148,7 @@ export function buildLintView(
     rules,
     overrides,
     counts: severityCounts(rules),
+    resolve,
     facets: { plugins, categories },
     hasCatalog: Boolean(catalog && catalog.length > 0),
     totalRules: rules.length,

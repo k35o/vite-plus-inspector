@@ -25,13 +25,22 @@ pnpm add -g vite-plus-inspector
 vp-inspect
 ```
 
+Export a standalone, shareable HTML snapshot — no server needed, file resolution
+runs client-side:
+
+```sh
+npx vite-plus-inspector --output inspector.html
+```
+
 Options:
 
-| Flag                | Description                           | Default           |
-| ------------------- | ------------------------------------- | ----------------- |
-| `[root]`            | Directory containing `vite.config.ts` | current directory |
-| `-p, --port <port>` | Port for the server (or `PORT` env)   | `5177`            |
-| `--no-open`         | Don't open the browser automatically  | opens             |
+| Flag                  | Description                                  | Default           |
+| --------------------- | -------------------------------------------- | ----------------- |
+| `[root]`              | Directory containing `vite.config.ts`        | current directory |
+| `-p, --port <port>`   | Port for the server (or `PORT` env)          | `5177`            |
+| `-o, --output <file>` | Write a standalone static HTML file and exit | (runs a server)   |
+| `--no-open`           | Don't open the browser automatically         | opens             |
+| `--no-watch`          | Don't reload when `vite.config.ts` changes   | watches           |
 
 ## What it shows
 

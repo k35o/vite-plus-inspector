@@ -552,6 +552,51 @@ function clientScript(): string {
     if (info) info.textContent = 'Showing ' + visible + ' of ' + rows.length + ' rules';
   }
 
+  // Glob -> RegExp, mirroring the server's globToRegExp, so file resolution
+  // works entirely client-side (no server needed in a static export).
+  function globToRe(glob) {
+    var re = '';
+    for (var i = 0; i < glob.length; i++) {
+      var c = glob[i];
+      if (c === '*') {
+        if (glob[i + 1] === '*') {
+          if (glob[i + 2] === '/') { re += '(?:.*/)?'; i += 2; }
+          else { re += '.*'; i += 1; }
+        } else { re += '[^/]*'; }
+      } else if (c === '?') { re += '[^/]'; }
+      else if (c === '{') { re += '(?:'; }
+      else if (c === '}') { re += ')'; }
+      else if (c === ',') { re += '|'; }
+      else if (c === '/') { re += '/'; }
+      else if ('.+^$()|[]'.indexOf(c) !== -1 || c === '\\\\') { re += '\\\\' + c; }
+      else { re += c; }
+    }
+    return new RegExp('^' + re + '$');
+  }
+
+  function sortRules(a, b) {
+    var ord = { error: 0, warn: 1, off: 2 };
+    return (ord[a.severity] - ord[b.severity]) ||
+      (Number(b.configured) - Number(a.configured)) ||
+      a.id.localeCompare(b.id);
+  }
+
+  function resolveForFileClient(file) {
+    var byId = {};
+    data.lint.rules.forEach(function (r) { byId[r.id] = r; });
+    var matched = [];
+    (data.lint.resolve.overrides || []).forEach(function (o) {
+      var hit = o.files.some(function (g) { return globToRe(g).test(file); });
+      if (hit) {
+        matched.push(o.files.join(', '));
+        o.rules.forEach(function (r) { byId[r.id] = r; });
+      }
+    });
+    var rules = Object.keys(byId).map(function (k) { return byId[k]; });
+    rules.sort(sortRules);
+    return { rules: rules, matchedOverrides: matched };
+  }
+
   function onResolve() {
     var input = document.getElementById('resolve-input');
     var status = document.getElementById('resolve-status');
@@ -566,18 +611,17 @@ function clientScript(): string {
       applyFilter();
       return;
     }
-    fetch('/__resolve?file=' + encodeURIComponent(file)).then(function (r) { return r.json(); }).then(function (res) {
-      container.innerHTML = rulesTable(res.rules);
-      var c = { error: 0, warn: 0, off: 0 };
-      res.rules.forEach(function (r) { c[r.severity]++; });
-      if (counts) counts.innerHTML = countsBadges(c);
-      if (status) {
-        status.innerHTML = res.matchedOverrides.length
-          ? 'Matched overrides: ' + tags(res.matchedOverrides)
-          : 'No overrides matched — base config applies.';
-      }
-      applyFilter();
-    }).catch(function () { if (status) status.textContent = 'Failed to resolve.'; });
+    var res = resolveForFileClient(file);
+    container.innerHTML = rulesTable(res.rules);
+    var c = { error: 0, warn: 0, off: 0 };
+    res.rules.forEach(function (r) { c[r.severity]++; });
+    if (counts) counts.innerHTML = countsBadges(c);
+    if (status) {
+      status.innerHTML = res.matchedOverrides.length
+        ? 'Matched overrides: ' + tags(res.matchedOverrides)
+        : 'No overrides matched — base config applies.';
+    }
+    applyFilter();
   }
 
   function debounce(fn, ms) {
@@ -700,7 +744,7 @@ function clientScript(): string {
     applyTheme(readTheme());
   }
 
-  if (window.EventSource) {
+  if (window.EventSource && location.protocol.indexOf('http') === 0) {
     try {
       var es = new EventSource('/__events');
       es.onmessage = function () { location.reload(); };
