@@ -57,4 +57,7 @@ jobs:
         uses: ./.github/composite-actions/install
 
       - name: Verify a changeset is present
+        # The "Version Packages" PR consumes changesets, so this check is
+        # skipped there; the job still succeeds and satisfies the required check.
+        if: github.head_ref != 'changeset-release/main'
         run: pnpm exec changeset status --since=origin/main
