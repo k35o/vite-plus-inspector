@@ -103,10 +103,12 @@ function styles(): string {
     .theme-toggle {
       margin-left: auto; font: inherit; font-size: 11px; color: var(--muted);
       background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 999px; padding: 3px 11px; cursor: pointer;
+      border-radius: 999px; padding: 4px 11px; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 6px;
       transition: color 0.15s ease-out, border-color 0.15s ease-out;
     }
     .theme-toggle:hover { color: var(--text); border-color: var(--accent); }
+    .theme-toggle svg { width: 13px; height: 13px; flex-shrink: 0; }
     .config-path {
       padding: 10px 18px; font-size: 10px; color: var(--muted); font-family: var(--mono);
       border-bottom: 1px solid var(--border); word-break: break-all;
@@ -594,7 +596,14 @@ function clientScript(): string {
   });
 
   var THEMES = ['system', 'light', 'dark'];
-  var THEME_LABELS = { system: 'Auto', light: 'Light', dark: 'Dark' };
+  var ICON_SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/></svg>';
+  var ICON_MOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
+  var ICON_SYSTEM = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>';
+  var THEME_META = {
+    system: { label: 'System', icon: ICON_SYSTEM, hint: 'follows your OS' },
+    light: { label: 'Light', icon: ICON_SUN, hint: '' },
+    dark: { label: 'Dark', icon: ICON_MOON, hint: '' },
+  };
   function readTheme() {
     try { return localStorage.getItem('vpi-theme') || 'system'; } catch (e) { return 'system'; }
   }
@@ -603,7 +612,11 @@ function clientScript(): string {
     else delete document.documentElement.dataset.theme;
     try { localStorage.setItem('vpi-theme', t); } catch (e) {}
     var btn = document.getElementById('theme-toggle');
-    if (btn) btn.textContent = THEME_LABELS[t];
+    if (btn) {
+      var meta = THEME_META[t];
+      btn.innerHTML = meta.icon + '<span>' + meta.label + '</span>';
+      btn.title = 'Theme: ' + meta.label + (meta.hint ? ' (' + meta.hint + ')' : '') + ' — click to change';
+    }
   }
   var toggle = document.getElementById('theme-toggle');
   if (toggle) {
@@ -639,7 +652,7 @@ export function buildHtml(data: InspectorData): string {
     <div class="logo">
       <span class="logo-mark"></span>
       <span>Vite+ Inspector</span>
-      <button id="theme-toggle" class="theme-toggle" type="button" title="Toggle color theme">Auto</button>
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch color theme">Theme</button>
     </div>
     <div class="config-path">${escapeHtml(data.configPath)}</div>
     <div class="nav-section" id="nav"></div>
