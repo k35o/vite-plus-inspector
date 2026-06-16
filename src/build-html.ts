@@ -109,6 +109,8 @@ function styles(): string {
     }
     .theme-toggle:hover { color: var(--text); border-color: var(--accent); }
     .theme-toggle svg { width: 13px; height: 13px; flex-shrink: 0; }
+    /* Reserve width for the widest label so cycling causes no layout shift. */
+    .theme-toggle .tt-label { display: inline-block; min-width: 48px; text-align: left; }
     .config-path {
       padding: 10px 18px; font-size: 10px; color: var(--muted); font-family: var(--mono);
       border-bottom: 1px solid var(--border); word-break: break-all;
@@ -614,7 +616,7 @@ function clientScript(): string {
     var btn = document.getElementById('theme-toggle');
     if (btn) {
       var meta = THEME_META[t];
-      btn.innerHTML = meta.icon + '<span>' + meta.label + '</span>';
+      btn.innerHTML = meta.icon + '<span class="tt-label">' + meta.label + '</span>';
       btn.title = 'Theme: ' + meta.label + (meta.hint ? ' (' + meta.hint + ')' : '') + ' — click to change';
     }
   }
