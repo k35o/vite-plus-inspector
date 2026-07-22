@@ -17,3 +17,7 @@ autoInstallPeers: false
 overrides:
   vite: npm:@voidzero-dev/vite-plus-core@latest
   vitest: npm:@voidzero-dev/vite-plus-test@latest
+
+versioning:
+  changelog:
+    storage: repository
