@@ -78,10 +78,10 @@ pnpm build     # vp pack -> dist/
 
 ## Release
 
-Versioned and published with [Changesets](https://github.com/changesets/changesets).
+Versioned and published with [pnpm's built-in release management](https://pnpm.io/versioning), driven in CI by [k35o/pnpm-release-action](https://github.com/k35o/pnpm-release-action).
 
 ```sh
-pnpm changeset   # describe the change
+pnpm change   # describe the change (writes a changesets-format intent to .changeset/)
 ```
 
-Merging to `main` lets the release workflow open a version PR and publish to npm.
+Merging to `main` lets the release workflow open a release PR (branch `pnpm-release/main`) and, once that merges, publish to npm via OIDC trusted publishing.
