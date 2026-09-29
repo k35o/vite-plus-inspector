@@ -71,8 +71,49 @@ describe('buildLintView', () => {
 
   test('summarizes overrides', () => {
     expect(view.overrides).toStrictEqual([
-      { files: ['tests/**'], excludeFiles: [], ruleCount: 1 },
+      {
+        files: ['tests/**'],
+        excludeFiles: [],
+        ruleCount: 1,
+        jsPlugins: [],
+        env: {},
+        globals: {},
+      },
     ]);
+  });
+
+  test('an override keeps the JS plugins, env and globals it sets', () => {
+    expect(
+      buildLintView({
+        overrides: [
+          {
+            files: ['**/*.test.ts'],
+            jsPlugins: ['eslint-plugin-regexp'],
+            env: { vitest: true },
+            globals: { Bun: 'readonly' },
+          },
+        ],
+      }).overrides,
+    ).toStrictEqual([
+      {
+        files: ['**/*.test.ts'],
+        excludeFiles: [],
+        ruleCount: 0,
+        jsPlugins: ['eslint-plugin-regexp'],
+        env: { vitest: true },
+        globals: { Bun: 'readonly' },
+      },
+    ]);
+  });
+
+  test('env and globals are the config’s own, as oxlint takes none from presets', () => {
+    const own = buildLintView({
+      extends: [{ env: { browser: true }, globals: { $: 'readonly' } }],
+      env: { node: true },
+      globals: { Bun: 'readonly' },
+    });
+    expect(own.env).toStrictEqual({ node: true });
+    expect(own.globals).toStrictEqual({ Bun: 'readonly' });
   });
 
   test('carries excludeFiles to the summary and the per-file resolver data', () => {
@@ -119,8 +160,22 @@ describe('buildLintView', () => {
         overrides: [{ files: ['src/cli.ts'], rules: { 'no-console': 'off' } }],
       }).overrides,
     ).toStrictEqual([
-      { files: ['*.test.ts'], excludeFiles: [], ruleCount: 1 },
-      { files: ['src/cli.ts'], excludeFiles: [], ruleCount: 1 },
+      {
+        files: ['*.test.ts'],
+        excludeFiles: [],
+        ruleCount: 1,
+        jsPlugins: [],
+        env: {},
+        globals: {},
+      },
+      {
+        files: ['src/cli.ts'],
+        excludeFiles: [],
+        ruleCount: 1,
+        jsPlugins: [],
+        env: {},
+        globals: {},
+      },
     ]);
   });
 
@@ -154,7 +209,16 @@ describe('buildLintView', () => {
           },
         ],
       }).overrides,
-    ).toStrictEqual([{ files: ['*.tsx'], excludeFiles: [], ruleCount: 1 }]);
+    ).toStrictEqual([
+      {
+        files: ['*.tsx'],
+        excludeFiles: [],
+        ruleCount: 1,
+        jsPlugins: [],
+        env: {},
+        globals: {},
+      },
+    ]);
   });
 });
 

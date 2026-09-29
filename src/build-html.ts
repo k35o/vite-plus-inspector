@@ -350,6 +350,10 @@ function clientScript(): string {
     return tags(o.files) + except;
   }
 
+  function jsPluginLabel(plugin) {
+    return typeof plugin === 'string' ? plugin : plugin.specifier + ' as ' + plugin.name;
+  }
+
   function optionsText(opts) {
     if (!opts || !opts.length) return '';
     return opts.map(function (o) { return esc(JSON.stringify(o)); }).join(', ');
@@ -497,6 +501,8 @@ function clientScript(): string {
 
     if (lint.plugins.length) html += '<div class="card"><div class="card-header">Plugins <span class="nav-badge">' + lint.plugins.length + '</span></div><div class="card-body">' + tags(lint.plugins) + '</div></div>';
 
+    if (lint.jsPlugins.length) html += '<div class="card"><div class="card-header">JS Plugins <span class="nav-badge">' + lint.jsPlugins.length + '</span></div><div class="card-body">' + tags(lint.jsPlugins.map(jsPluginLabel)) + '</div></div>';
+
     if (Object.keys(lint.categories).length) {
       var cats = Object.keys(lint.categories).map(function (c) { return badge(c + ': ' + lint.categories[c], lint.categories[c]); }).join(' ');
       html += '<div class="card"><div class="card-header">Categories (baseline)</div><div class="card-body">' + cats + '</div></div>';
@@ -544,14 +550,21 @@ function clientScript(): string {
     if (lint.overrides.length) {
       html += '<div class="card"><div class="card-header">Overrides <span class="nav-badge">' + lint.overrides.length + '</span></div>';
       lint.overrides.forEach(function (o) {
+        var sets = {};
+        if (o.jsPlugins.length) sets.jsPlugins = o.jsPlugins;
+        if (Object.keys(o.env).length) sets.env = o.env;
+        if (Object.keys(o.globals).length) sets.globals = o.globals;
         html += '<div style="padding:10px 14px;border-bottom:1px solid var(--border)">' +
           '<div>' + overrideFiles(o) + '</div>' +
-          '<div class="text-small text-muted" style="margin-top:4px">' + o.ruleCount + ' rule override' + (o.ruleCount === 1 ? '' : 's') + '</div></div>';
+          '<div class="text-small text-muted" style="margin-top:4px">' + o.ruleCount + ' rule override' + (o.ruleCount === 1 ? '' : 's') + '</div>' +
+          (Object.keys(sets).length ? kvTable(sets, '200px') : '') + '</div>';
       });
       html += '</div>';
     }
 
     if (Object.keys(lint.settings).length) html += '<div class="card"><div class="card-header">Settings</div>' + kvTable(lint.settings) + '</div>';
+    if (Object.keys(lint.env).length) html += '<div class="card"><div class="card-header">Env</div>' + kvTable(lint.env) + '</div>';
+    if (Object.keys(lint.globals).length) html += '<div class="card"><div class="card-header">Globals</div>' + kvTable(lint.globals) + '</div>';
     html += patternsCard('Ignore Patterns', lint.ignorePatterns);
     return html;
   }

@@ -5,6 +5,7 @@ import {
   inferPresetLabel,
   resolveCategories,
   resolveEffective,
+  resolveJsPlugins,
   resolveOptions,
   resolveOverrides,
   resolvePlugins,
@@ -16,6 +17,7 @@ import type {
   DefaultPackageCommand,
   EnrichedRule,
   FmtConfig,
+  JsPlugin,
   LintNode,
   PackConfig,
   RunConfig,
@@ -36,6 +38,9 @@ export type OverrideSummary = {
   files: string[];
   excludeFiles: string[];
   ruleCount: number;
+  jsPlugins: JsPlugin[];
+  env: Record<string, boolean>;
+  globals: Record<string, unknown>;
 };
 
 export type LintView = {
@@ -43,6 +48,9 @@ export type LintView = {
   settings: Record<string, unknown>;
   ignorePatterns: string[];
   plugins: string[];
+  jsPlugins: JsPlugin[];
+  env: Record<string, boolean>;
+  globals: Record<string, unknown>;
   categories: Record<string, Severity>;
   presets: PresetSummary[];
   rules: EnrichedRule[];
@@ -132,6 +140,9 @@ export function buildLintView(
     files: o.files,
     excludeFiles: o.excludeFiles,
     ruleCount: o.rules.length,
+    jsPlugins: o.jsPlugins,
+    env: o.env,
+    globals: o.globals,
   }));
 
   const plugins = [...new Set(rules.map((r) => r.plugin))].toSorted((a, b) =>
@@ -148,6 +159,11 @@ export function buildLintView(
     settings: lint.settings ?? {},
     ignorePatterns: lint.ignorePatterns ?? [],
     plugins: resolvePlugins(lint),
+    jsPlugins: resolveJsPlugins(lint),
+    // Not merged along the chain like categories: oxlint takes `env` and
+    // `globals` from the config itself and ignores the ones presets declare.
+    env: lint.env ?? {},
+    globals: lint.globals ?? {},
     categories: resolveCategories(lint),
     presets,
     rules,

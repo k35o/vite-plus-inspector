@@ -6,6 +6,7 @@ import {
   normalizeSeverity,
   resolveCategories,
   resolveEffective,
+  resolveJsPlugins,
   resolveOptions,
   resolveOverrides,
   resolvePlugins,
@@ -225,6 +226,43 @@ describe('resolveOptions', () => {
 
   test('a config without options has none', () => {
     expect(resolveOptions({})).toStrictEqual({});
+  });
+});
+
+describe('resolveJsPlugins', () => {
+  test('gathers the chain’s plugins, ancestors first', () => {
+    expect(
+      resolveJsPlugins({
+        extends: [{ jsPlugins: ['eslint-plugin-regexp'] }],
+        jsPlugins: [{ name: 'tw', specifier: 'oxlint-tailwindcss' }],
+      }),
+    ).toStrictEqual([
+      'eslint-plugin-regexp',
+      { name: 'tw', specifier: 'oxlint-tailwindcss' },
+    ]);
+  });
+
+  test('lists a plugin reached through two presets once', () => {
+    const regexp: LintNode = { jsPlugins: ['eslint-plugin-regexp'] };
+    expect(
+      resolveJsPlugins({
+        extends: [{ extends: [regexp] }, { extends: [regexp] }],
+      }),
+    ).toStrictEqual(['eslint-plugin-regexp']);
+  });
+
+  test('keeps a plugin and its aliased copy apart', () => {
+    expect(
+      resolveJsPlugins({
+        jsPlugins: [
+          'eslint-plugin-import',
+          { name: 'import-js', specifier: 'eslint-plugin-import' },
+        ],
+      }),
+    ).toStrictEqual([
+      'eslint-plugin-import',
+      { name: 'import-js', specifier: 'eslint-plugin-import' },
+    ]);
   });
 });
 

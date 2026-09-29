@@ -217,6 +217,73 @@ describe('page', () => {
     ).not.toContain('Options');
   });
 
+  test('the lint section lists JS plugins from presets and the config', () => {
+    expect(
+      section(
+        {
+          lint: {
+            extends: [{ jsPlugins: ['eslint-plugin-regexp'] }],
+            jsPlugins: [{ name: 'tw', specifier: 'oxlint-tailwindcss' }],
+          },
+        },
+        'lint',
+      ),
+    ).toContain(
+      '<div class="card-header">JS Plugins <span class="nav-badge">2</span></div><div class="card-body"><span class="tag">eslint-plugin-regexp</span><span class="tag">oxlint-tailwindcss as tw</span></div>',
+    );
+  });
+
+  test('the lint section shows the environments', () => {
+    expect(
+      section({ lint: { env: { browser: true, node: false } } }, 'lint'),
+    ).toContain(
+      '<div class="card-header">Env</div><table><tbody><tr><td class="mono text-blue">browser</td><td><span class="text-green">true</span></td></tr><tr><td class="mono text-blue">node</td><td><span class="text-muted">false</span></td></tr></tbody></table>',
+    );
+  });
+
+  test('the lint section shows the globals', () => {
+    expect(
+      section({ lint: { globals: { Bun: 'readonly' } } }, 'lint'),
+    ).toContain(
+      '<div class="card-header">Globals</div><table><tbody><tr><td class="mono text-blue">Bun</td><td><span class="text-yellow">"readonly"</span></td></tr></tbody></table>',
+    );
+  });
+
+  test('a lint override shows the JS plugins, env and globals it sets', () => {
+    expect(
+      section(
+        {
+          lint: {
+            overrides: [
+              {
+                files: ['**/*.test.ts'],
+                jsPlugins: ['eslint-plugin-regexp'],
+                env: { vitest: true },
+                globals: { Bun: 'readonly' },
+              },
+            ],
+          },
+        },
+        'lint',
+      ),
+    ).toContain(
+      '0 rule overrides</div><table><tbody><tr><td class="mono text-blue" style="width:200px">jsPlugins</td><td><span class="text-muted">[&quot;eslint-plugin-regexp&quot;]</span></td></tr><tr><td class="mono text-blue" style="width:200px">env</td><td><span class="text-muted">{&quot;vitest&quot;:true}</span></td></tr><tr><td class="mono text-blue" style="width:200px">globals</td><td><span class="text-muted">{&quot;Bun&quot;:&quot;readonly&quot;}</span></td></tr></tbody></table></div>',
+    );
+  });
+
+  test('a lint override that sets only rules shows nothing more', () => {
+    expect(
+      section(
+        {
+          lint: {
+            overrides: [{ files: ['a.ts'], rules: { 'no-var': 'off' } }],
+          },
+        },
+        'lint',
+      ),
+    ).toContain('1 rule override</div></div></div>');
+  });
+
   test('an override applies to a file its files pattern matches', () => {
     expect(resolveStatus('src/a.test.ts')).toBe(
       'Matched overrides: <span class="tag">**/*.test.ts</span>',
