@@ -395,6 +395,20 @@ describe('serializeInspectorData', () => {
     });
   });
 
+  test('a number JSON cannot carry is shown as written', () => {
+    expect(
+      received({
+        test: {
+          testTimeout: Infinity,
+          hookTimeout: -Infinity,
+          retry: Number.NaN,
+        },
+      }),
+    ).toMatchObject({
+      test: { testTimeout: 'Infinity', hookTimeout: '-Infinity', retry: 'NaN' },
+    });
+  });
+
   test('a regular expression is shown as its literal', () => {
     expect(
       received({ pack: { deps: { neverBundle: [/^node:/u, 'x'] } } }),

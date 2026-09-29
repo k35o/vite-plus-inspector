@@ -240,8 +240,8 @@ export function buildInspectorData(
 
 /**
  * JSON for the browser. A config holds values JSON cannot carry (task
- * functions, plugin hooks, regular expressions), which would otherwise vanish
- * or turn into `null` / `{}`.
+ * functions, plugin hooks, regular expressions, `Infinity`), which would
+ * otherwise vanish or turn into `null` / `{}`.
  */
 export function serializeInspectorData(data: InspectorData): string {
   return JSON.stringify(data, (_key, value: unknown) => {
@@ -249,6 +249,9 @@ export function serializeInspectorData(data: InspectorData): string {
       return `[Function: ${value.name || 'anonymous'}]`;
     }
     if (value instanceof RegExp) return String(value);
+    if (typeof value === 'number' && !Number.isFinite(value)) {
+      return String(value);
+    }
     return value;
   });
 }
