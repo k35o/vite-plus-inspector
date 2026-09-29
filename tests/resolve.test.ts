@@ -101,7 +101,7 @@ describe('ruleDocsUrl', () => {
 const base: LintNode = {
   plugins: ['eslint', 'oxc', 'unicorn'],
   categories: { correctness: 'error', style: 'off' },
-  rules: { 'no-console': 'warn', eqeqeq: 'error' },
+  rules: { 'no-console': 'warn', eqeqeq: 'error', 'no-var': 'error' },
 };
 const typescript: LintNode = {
   extends: [base],
@@ -307,6 +307,11 @@ describe('resolveEffective', () => {
   test('a preset wins over the preset it extends', () => {
     const lint: LintNode = { extends: [typescript] };
     expect(resolved(lint)['no-console']).toBe('error (typescript)');
+  });
+
+  test('an entry only the preset of a preset has is attributed to that one', () => {
+    const lint: LintNode = { extends: [typescript] };
+    expect(resolved(lint)['no-var']).toBe('error (base)');
   });
 
   test('a rule without an entry takes the severity of its category', () => {
@@ -519,6 +524,7 @@ describe('resolveEffective', () => {
         ),
       ).toStrictEqual({
         'no-console': 'error (typescript)',
+        'no-var': 'error (base)',
         'typescript/no-explicit-any': 'error (typescript)',
         eqeqeq: 'off (config)',
       });
@@ -734,7 +740,7 @@ describe('resolveOverrides', () => {
 
 describe('countPresetRules', () => {
   test('counts unique rule ids across the chain', () => {
-    // base: no-console, eqeqeq (2) + typescript: no-explicit-any, no-console (no-console dup) => 3 unique
-    expect(countPresetRules(typescript)).toBe(3);
+    // base: no-console, eqeqeq, no-var (3) + typescript: no-explicit-any, no-console (no-console dup) => 4 unique
+    expect(countPresetRules(typescript)).toBe(4);
   });
 });
