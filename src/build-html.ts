@@ -551,7 +551,6 @@ function clientScript(): string {
       html += '<div class="card"><div class="card-header">Overrides <span class="nav-badge">' + lint.overrides.length + '</span></div>';
       lint.overrides.forEach(function (o) {
         var sets = {};
-        if (o.jsPlugins.length) sets.jsPlugins = o.jsPlugins;
         if (Object.keys(o.env).length) sets.env = o.env;
         if (Object.keys(o.globals).length) sets.globals = o.globals;
         html += '<div style="padding:10px 14px;border-bottom:1px solid var(--border)">' +
@@ -559,6 +558,7 @@ function clientScript(): string {
           '<div class="text-small text-muted" style="margin-top:4px">' + o.ruleCount + ' rule override' + (o.ruleCount === 1 ? '' : 's') +
           (o.preset === null ? '' : ' · inherited from ' + tags([o.preset])) + '</div>' +
           (o.plugins ? '<div class="text-small text-muted" style="margin-top:4px">plugins: ' + tags(o.plugins) + '</div>' : '') +
+          (o.jsPlugins.length ? '<div class="text-small text-muted" style="margin-top:4px">JS plugins: ' + tags(o.jsPlugins.map(jsPluginLabel)) + '</div>' : '') +
           (Object.keys(sets).length ? kvTable(sets, '200px') : '') + '</div>';
       });
       html += '</div>';

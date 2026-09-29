@@ -303,7 +303,7 @@ describe('page', () => {
     );
   });
 
-  test('a lint override shows the JS plugins, env and globals it sets', () => {
+  test('an override shows the JS plugins it loads, an aliased one with its alias', () => {
     expect(
       section(
         {
@@ -311,7 +311,29 @@ describe('page', () => {
             overrides: [
               {
                 files: ['**/*.test.ts'],
-                jsPlugins: ['eslint-plugin-regexp'],
+                jsPlugins: [
+                  'eslint-plugin-regexp',
+                  { name: 'tw', specifier: 'oxlint-tailwindcss' },
+                ],
+              },
+            ],
+          },
+        },
+        'lint',
+      ),
+    ).toContain(
+      '0 rule overrides</div><div class="text-small text-muted" style="margin-top:4px">JS plugins: <span class="tag">eslint-plugin-regexp</span><span class="tag">oxlint-tailwindcss as tw</span></div></div>',
+    );
+  });
+
+  test('an override shows the env and globals it sets', () => {
+    expect(
+      section(
+        {
+          lint: {
+            overrides: [
+              {
+                files: ['**/*.test.ts'],
                 env: { vitest: true },
                 globals: { Bun: 'readonly' },
               },
@@ -321,7 +343,7 @@ describe('page', () => {
         'lint',
       ),
     ).toContain(
-      '0 rule overrides</div><table><tbody><tr><td class="mono text-blue" style="width:200px">jsPlugins</td><td><span class="text-muted">[&quot;eslint-plugin-regexp&quot;]</span></td></tr><tr><td class="mono text-blue" style="width:200px">env</td><td><span class="text-muted">{&quot;vitest&quot;:true}</span></td></tr><tr><td class="mono text-blue" style="width:200px">globals</td><td><span class="text-muted">{&quot;Bun&quot;:&quot;readonly&quot;}</span></td></tr></tbody></table></div>',
+      '0 rule overrides</div><table><tbody><tr><td class="mono text-blue" style="width:200px">env</td><td><span class="text-muted">{&quot;vitest&quot;:true}</span></td></tr><tr><td class="mono text-blue" style="width:200px">globals</td><td><span class="text-muted">{&quot;Bun&quot;:&quot;readonly&quot;}</span></td></tr></tbody></table></div>',
     );
   });
 
