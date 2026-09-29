@@ -685,7 +685,8 @@ function clientScript(): string {
   function renderTest(test) {
     var html = '<div class="section-title">test</div><div class="section-desc">vitest configuration</div>';
     if (!test || !Object.keys(test).length) return html + '<div class="card"><div class="empty">Enabled with default settings</div></div>';
-    if (Array.isArray(test.projects)) {
+    var hasProjects = Array.isArray(test.projects);
+    if (hasProjects) {
       html += '<div class="card"><div class="card-header">Projects</div>';
       test.projects.forEach(function (proj, i) {
         html += '<div style="padding:10px 14px;border-bottom:1px solid var(--border)">';
@@ -703,9 +704,12 @@ function clientScript(): string {
         }
         html += '</div>';
       });
-      return html + '</div>';
+      html += '</div>';
     }
-    return html + '<div class="card">' + kvTable(test, '200px') + '</div>';
+    var opts = {};
+    Object.keys(test).forEach(function (k) { if (!hasProjects || k !== 'projects') opts[k] = test[k]; });
+    if (Object.keys(opts).length) html += '<div class="card"><div class="card-header">Options</div>' + kvTable(opts, '200px') + '</div>';
+    return html;
   }
 
   function taskDetails(task) {

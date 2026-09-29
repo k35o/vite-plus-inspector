@@ -197,6 +197,26 @@ describe('page', () => {
     );
   });
 
+  test('a test project given as a glob is listed', () => {
+    expect(section({ test: { projects: ['packages/*'] } }, 'test')).toContain(
+      '<div class="card-header">Projects</div><div style="padding:10px 14px;border-bottom:1px solid var(--border)"><div class="mono">packages/*</div></div></div>',
+    );
+  });
+
+  test('options set beside test projects are shown after them', () => {
+    expect(
+      section({ test: { globals: true, projects: ['packages/*'] } }, 'test'),
+    ).toContain(
+      '<div class="mono">packages/*</div></div></div><div class="card"><div class="card-header">Options</div><table><tbody><tr><td class="mono text-blue" style="width:200px">globals</td><td><span class="text-green">true</span></td></tr></tbody></table></div>',
+    );
+  });
+
+  test('a test block with nothing but projects has no options card', () => {
+    expect(
+      section({ test: { projects: ['packages/*'] } }, 'test'),
+    ).not.toContain('Options');
+  });
+
   test('an override applies to a file its files pattern matches', () => {
     expect(resolveStatus('src/a.test.ts')).toBe(
       'Matched overrides: <span class="tag">**/*.test.ts</span>',
