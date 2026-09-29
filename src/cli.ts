@@ -5,6 +5,7 @@ import { resolve } from 'node:path';
 
 import { cac } from 'cac';
 
+import manifest from '../package.json' with { type: 'json' };
 import { buildHtml } from './build-html.ts';
 import { loadCatalog } from './catalog.ts';
 import { configPathFor, loadConfig } from './load-config.ts';
@@ -80,7 +81,7 @@ cli
   );
 
 cli.help();
-cli.version('0.0.0');
+cli.version(manifest.version);
 cli.parse();
 
 function openBrowser(url: string): void {
