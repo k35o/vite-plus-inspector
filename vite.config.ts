@@ -12,6 +12,7 @@ export default defineConfig({
     ignorePatterns: ['CHANGELOG.md', '.changeset'],
     options: {
       typeAware: true,
+      typeCheck: true,
     },
     overrides: [
       {

@@ -1,15 +1,27 @@
 import { execFile } from 'node:child_process';
+import { createRequire } from 'node:module';
+import { dirname, join } from 'node:path';
 
-function runCapture(cmd: string, args: string[], cwd: string): Promise<string> {
+function runCapture(
+  file: string,
+  args: string[],
+  cwd: string,
+): Promise<string> {
   return new Promise((resolve, reject) => {
     execFile(
-      cmd,
+      file,
       args,
       { cwd, maxBuffer: 32 * 1024 * 1024 },
-      (error, stdout) => {
-        if (error)
-          reject(error instanceof Error ? error : new Error('vp lint failed'));
-        else resolve(stdout);
+      (error, stdout, stderr) => {
+        if (!error) {
+          resolve(stdout);
+          return;
+        }
+        // Node's own message is only the command line. The reason is in what
+        // the child printed, and oxlint reports a rejected lint config on
+        // stdout while stderr may hold nothing but an unrelated note.
+        const output = `${stdout}${stderr}`.trim();
+        reject(new Error(output || error.message));
       },
     );
   });
@@ -25,8 +37,6 @@ export type RuleMeta = {
   typeAware: boolean;
   /** Whether oxlint can autofix it (excludes `none` and `pending`). */
   fixable: boolean;
-  /** Raw fix capability string from oxlint. */
-  fix: string;
   /** On by default in oxlint's built-in config. */
   defaultOn: boolean;
   docsUrl: string;
@@ -58,44 +68,33 @@ function toRuleMeta(raw: RawRule): RuleMeta {
     category: raw.category,
     typeAware: raw.type_aware,
     fixable: raw.fix !== 'none' && raw.fix !== 'pending',
-    fix: raw.fix,
     defaultOn: raw.default,
     docsUrl: raw.docs_url,
   };
 }
 
-/**
- * Pull the top-level JSON array out of `vp lint --rules` output, which is
- * prefixed by a `VITE+ …` banner. The pretty-printed array opens with `[` at
- * the start of a line, so anchor on that rather than the first `[` anywhere
- * (a banner or diagnostic line could contain one).
- */
-export function extractJsonArray(out: string): string | null {
-  const match = /^\[/mu.exec(out);
-  const start = match ? match.index : out.indexOf('[');
-  const end = out.lastIndexOf(']');
-  if (start === -1 || end === -1 || end < start) return null;
-  return out.slice(start, end + 1);
+/** Parse the stdout of `vp lint --rules --format=json`. */
+export function parseCatalog(stdout: string): RuleMeta[] {
+  // vp evaluates the project's config in the same process, so whatever the
+  // config prints while it loads comes before the array.
+  const start = Math.max(stdout.search(/^\[$/mu), 0);
+  const rules = JSON.parse(stdout.slice(start)) as RawRule[];
+  return rules.map((rule) => toRuleMeta(rule));
 }
 
 /**
- * Load the full oxlint rule catalog by invoking `vp lint --rules --format=json`
- * in the target project. Returns null if vp is unavailable or the output can't
- * be parsed — the inspector degrades to showing only declared rules.
+ * Load the full oxlint rule catalog from the vite-plus that the project's
+ * `vite.config.ts` itself resolves, so the rules always match the project's
+ * toolchain.
  */
-export async function loadCatalog(root: string): Promise<RuleMeta[] | null> {
-  try {
-    const stdout = await runCapture(
-      'vp',
-      ['lint', '--rules', '--format=json'],
-      root,
-    );
-    const json = extractJsonArray(stdout);
-    if (json === null) return null;
-    const raw = JSON.parse(json) as RawRule[];
-    if (!Array.isArray(raw)) return null;
-    return raw.map((rule) => toRuleMeta(rule));
-  } catch {
-    return null;
-  }
+export async function loadCatalog(configPath: string): Promise<RuleMeta[]> {
+  const projectRequire = createRequire(configPath);
+  const manifestPath = projectRequire.resolve('vite-plus/package.json');
+  const { bin } = projectRequire(manifestPath) as { bin: { vp: string } };
+  const stdout = await runCapture(
+    process.execPath,
+    [join(dirname(manifestPath), bin.vp), 'lint', '--rules', '--format=json'],
+    dirname(configPath),
+  );
+  return parseCatalog(stdout);
 }

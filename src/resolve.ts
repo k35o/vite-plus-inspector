@@ -2,7 +2,6 @@ import type { RuleMeta } from './catalog.ts';
 import type {
   EnrichedRule,
   LintNode,
-  LintOverride,
   ResolvedRule,
   RuleValue,
   Severity,
@@ -29,17 +28,17 @@ export function ruleOptions(value: RuleValue): unknown[] {
 /**
  * Map a rule id to its oxc.rs documentation URL.
  *
- * Unprefixed ids (`no-console`) belong to the `eslint` plugin; `jsx-a11y` is
- * spelled `jsx_a11y` in the docs path. JS plugins like `tailwindcss` are not
- * hosted on oxc.rs, so they get no link.
+ * Unprefixed ids (`no-console`) belong to the `eslint` plugin; the docs path
+ * spells plugin names with underscores (`jsx_a11y`, `react_perf`). JS plugins
+ * like `tailwindcss` are not hosted on oxc.rs, so they get no link.
  */
 export function ruleDocsUrl(ruleId: string): string | null {
   const slash = ruleId.indexOf('/');
   const plugin = slash === -1 ? 'eslint' : ruleId.slice(0, slash);
   const rule = slash === -1 ? ruleId : ruleId.slice(slash + 1);
   if (plugin === 'tailwindcss') return null;
-  const seg = plugin === 'jsx-a11y' ? 'jsx_a11y' : plugin;
-  return `https://oxc.rs/docs/guide/usage/linter/rules/${seg}/${rule}`;
+  const scope = plugin.replaceAll('-', '_');
+  return `https://oxc.rs/docs/guide/usage/linter/rules/${scope}/${rule}.html`;
 }
 
 /**
@@ -48,19 +47,25 @@ export function ruleDocsUrl(ruleId: string): string | null {
  * plugin it depends on, so the most-derived plugin identifies the layer.
  */
 export function inferPresetLabel(node: LintNode): string {
-  if (typeof node.name === 'string' && node.name.length > 0) return node.name;
   const plugins = node.plugins ?? [];
   if (plugins.includes('nextjs')) return 'nextjs';
   if (plugins.includes('node')) return 'backend';
   if (plugins.includes('react')) return 'react';
   if (plugins.includes('vitest') || plugins.includes('jest')) return 'test';
   if (plugins.includes('typescript')) return 'typescript';
-  if ((node.jsPlugins ?? []).includes('oxlint-tailwindcss')) return 'tailwind';
+  if (jsPluginSpecifiers(node).includes('oxlint-tailwindcss'))
+    return 'tailwind';
   if (plugins.length > 0) return 'base';
   // A plugin-less preset (e.g. a JS-plugin layer) is best identified by the
   // namespace its rules share.
   const ns = dominantNamespace(node.rules);
   return ns ?? 'preset';
+}
+
+function jsPluginSpecifiers(node: LintNode): string[] {
+  return (node.jsPlugins ?? []).map((plugin) =>
+    typeof plugin === 'string' ? plugin : plugin.specifier,
+  );
 }
 
 /** The rule-id namespace shared by the most rules, or null if none dominates. */
@@ -97,54 +102,6 @@ export function flattenExtends(node: LintNode): LintNode[] {
   return out;
 }
 
-/**
- * Convert a glob (as used in oxlint `overrides[].files`) to an anchored RegExp.
- * Supports `**`, `*`, `?`, and `{a,b}` brace alternation.
- */
-export function globToRegExp(glob: string): RegExp {
-  let re = '';
-  for (let i = 0; i < glob.length; i += 1) {
-    const c = glob[i];
-    if (c === '*') {
-      if (glob[i + 1] === '*') {
-        if (glob[i + 2] === '/') {
-          re += '(?:.*/)?';
-          i += 2;
-        } else {
-          re += '.*';
-          i += 1;
-        }
-      } else {
-        re += '[^/]*';
-      }
-    } else if (c === '?') {
-      re += '[^/]';
-    } else if (c === '{') {
-      re += '(?:';
-    } else if (c === '}') {
-      re += ')';
-    } else if (c === ',') {
-      re += '|';
-    } else if (c === '/') {
-      re += '/';
-    } else if (c !== undefined && '.+^$()|[]\\'.includes(c)) {
-      re += `\\${c}`;
-    } else {
-      re += c;
-    }
-  }
-  return new RegExp(`^${re}$`, 'u');
-}
-
-/** Whether `filePath` matches any of an override's `files` globs. */
-export function matchesFiles(
-  files: string | string[],
-  filePath: string,
-): boolean {
-  const globs = Array.isArray(files) ? files : [files];
-  return globs.some((glob) => globToRegExp(glob).test(filePath));
-}
-
 type Winner = { value: RuleValue; source: string };
 
 function applyRules(
@@ -174,7 +131,7 @@ function toResolvedRules(map: Map<string, Winner>): ResolvedRule[] {
     );
 }
 
-/** The fully merged extends chain + own rules, as a winner map (no overrides). */
+/** The fully merged extends chain + own rules, as a winner map. */
 function baseWinners(lint: LintNode): Map<string, Winner> {
   const map = new Map<string, Winner>();
   for (const parent of lint.extends ?? []) {
@@ -186,7 +143,7 @@ function baseWinners(lint: LintNode): Map<string, Winner> {
   return map;
 }
 
-/** Effective rules for the config as a whole, ignoring per-file overrides. */
+/** Effective rules for the config as a whole, before per-file overrides. */
 export function resolveBaseRules(lint: LintNode): ResolvedRule[] {
   return toResolvedRules(baseWinners(lint));
 }
@@ -219,39 +176,6 @@ export function resolvePlugins(lint: LintNode): string[] {
   return plugins;
 }
 
-export type FileResolution = {
-  file: string;
-  matchedOverrides: string[];
-  rules: ResolvedRule[];
-};
-
-/**
- * Resolve the effective rules for a specific file path: the base config plus
- * every matching override applied in array order (later overrides win).
- */
-export function resolveForFile(
-  lint: LintNode,
-  filePath: string,
-): FileResolution {
-  const map = baseWinners(lint);
-  const matched: string[] = [];
-  const overrides: LintOverride[] = lint.overrides ?? [];
-  for (const override of overrides) {
-    if (matchesFiles(override.files, filePath)) {
-      const label = Array.isArray(override.files)
-        ? override.files.join(', ')
-        : override.files;
-      matched.push(label);
-      applyRules(map, override.rules, `override: ${label}`);
-    }
-  }
-  return {
-    file: filePath,
-    matchedOverrides: matched,
-    rules: toResolvedRules(map),
-  };
-}
-
 /** Count the rules contributed by a preset across its whole extends chain. */
 export function countPresetRules(node: LintNode): number {
   const ids = new Set<string>();
@@ -261,52 +185,17 @@ export function countPresetRules(node: LintNode): number {
   return ids.size;
 }
 
-/** The override globs that match a given file path, in declaration order. */
-export function matchedOverridesFor(
-  lint: LintNode,
-  filePath: string,
-): string[] {
-  const matched: string[] = [];
-  for (const override of lint.overrides ?? []) {
-    if (matchesFiles(override.files, filePath)) {
-      matched.push(
-        Array.isArray(override.files)
-          ? override.files.join(', ')
-          : override.files,
-      );
-    }
-  }
-  return matched;
-}
-
-function applyMatchingOverrides(
-  map: Map<string, Winner>,
-  lint: LintNode,
-  filePath: string,
-): void {
-  for (const override of lint.overrides ?? []) {
-    if (matchesFiles(override.files, filePath)) {
-      const label = Array.isArray(override.files)
-        ? override.files.join(', ')
-        : override.files;
-      applyRules(map, override.rules, `override: ${label}`);
-    }
-  }
-}
-
 /**
  * Resolve the effective state of EVERY rule in the catalog (plus any configured
  * rules not in the catalog, e.g. JS-plugin rules). Each rule's severity comes
  * from, in order of precedence: an explicit rule entry, its category baseline,
- * or off. Pass a file path to also layer in matching overrides.
+ * or off. Per-file overrides are layered on in the browser.
  */
 export function resolveEffective(
   lint: LintNode,
   catalog: RuleMeta[],
-  filePath = '',
 ): EnrichedRule[] {
   const winners = baseWinners(lint);
-  if (filePath.length > 0) applyMatchingOverrides(winners, lint, filePath);
   const categories = resolveCategories(lint);
 
   const out: EnrichedRule[] = [];

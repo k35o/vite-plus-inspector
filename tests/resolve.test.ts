@@ -2,15 +2,11 @@ import type { RuleMeta } from '../src/catalog.ts';
 import {
   countPresetRules,
   flattenExtends,
-  globToRegExp,
   inferPresetLabel,
-  matchedOverridesFor,
-  matchesFiles,
   normalizeSeverity,
   resolveBaseRules,
   resolveCategories,
   resolveEffective,
-  resolveForFile,
   resolveOverride,
   resolvePlugins,
   ruleDocsUrl,
@@ -30,7 +26,6 @@ function meta(
     category,
     typeAware: false,
     fixable: false,
-    fix: 'none',
     defaultOn: false,
     docsUrl: `https://oxc.rs/${id}`,
     ...extra,
@@ -61,58 +56,36 @@ describe('normalizeSeverity', () => {
 
 describe('ruleOptions', () => {
   test('returns tuple tail', () => {
-    expect(ruleOptions(['error', { a: 1 }])).toEqual([{ a: 1 }]);
+    expect(ruleOptions(['error', { a: 1 }])).toStrictEqual([{ a: 1 }]);
   });
   test('returns empty for bare severity', () => {
-    expect(ruleOptions('error')).toEqual([]);
+    expect(ruleOptions('error')).toStrictEqual([]);
   });
 });
 
 describe('ruleDocsUrl', () => {
   test('namespaced rule', () => {
     expect(ruleDocsUrl('typescript/no-floating-promises')).toBe(
-      'https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-floating-promises',
+      'https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-floating-promises.html',
     );
   });
   test('unprefixed rule belongs to eslint', () => {
     expect(ruleDocsUrl('no-console')).toBe(
-      'https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console',
+      'https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html',
     );
   });
   test('jsx-a11y is remapped to jsx_a11y', () => {
     expect(ruleDocsUrl('jsx-a11y/alt-text')).toBe(
-      'https://oxc.rs/docs/guide/usage/linter/rules/jsx_a11y/alt-text',
+      'https://oxc.rs/docs/guide/usage/linter/rules/jsx_a11y/alt-text.html',
+    );
+  });
+  test('react-perf is remapped to react_perf', () => {
+    expect(ruleDocsUrl('react-perf/jsx-no-jsx-as-prop')).toBe(
+      'https://oxc.rs/docs/guide/usage/linter/rules/react_perf/jsx-no-jsx-as-prop.html',
     );
   });
   test('tailwindcss has no oxc.rs page', () => {
     expect(ruleDocsUrl('tailwindcss/classnames-order')).toBeNull();
-  });
-});
-
-describe('globToRegExp / matchesFiles', () => {
-  test('** crosses path segments', () => {
-    expect(globToRegExp('tests/**/*.test.ts').test('tests/index.test.ts')).toBe(
-      true,
-    );
-    expect(globToRegExp('tests/**/*.test.ts').test('tests/a/b/x.test.ts')).toBe(
-      true,
-    );
-    expect(globToRegExp('tests/**/*.test.ts').test('src/x.ts')).toBe(false);
-  });
-  test('leading ** is optional prefix', () => {
-    expect(globToRegExp('**/*.d.ts').test('foo.d.ts')).toBe(true);
-    expect(globToRegExp('**/*.d.ts').test('a/b/foo.d.ts')).toBe(true);
-  });
-  test('brace alternation', () => {
-    const re = globToRegExp('**/*.test.{ts,tsx}');
-    expect(re.test('a/x.test.ts')).toBe(true);
-    expect(re.test('a/x.test.tsx')).toBe(true);
-    expect(re.test('a/x.test.js')).toBe(false);
-  });
-  test('matchesFiles accepts string or array', () => {
-    expect(matchesFiles('**/*.ts', 'a.ts')).toBe(true);
-    expect(matchesFiles(['**/*.js', '**/*.ts'], 'a.ts')).toBe(true);
-    expect(matchesFiles(['**/*.js'], 'a.ts')).toBe(false);
   });
 });
 
@@ -150,17 +123,19 @@ describe('inferPresetLabel', () => {
       'tailwind',
     );
   });
+  test('recognizes the tailwind JS plugin registered under an alias', () => {
+    expect(
+      inferPresetLabel({
+        jsPlugins: [{ name: 'tw', specifier: 'oxlint-tailwindcss' }],
+      }),
+    ).toBe('tailwind');
+  });
   test('falls back to the dominant rule namespace', () => {
     expect(
       inferPresetLabel({
         rules: { 'foo/a': 'error', 'foo/b': 'warn', 'bar/c': 'off' },
       }),
     ).toBe('foo');
-  });
-  test('respects an explicit name', () => {
-    expect(inferPresetLabel({ name: 'custom', plugins: ['react'] })).toBe(
-      'custom',
-    );
   });
 });
 
@@ -194,47 +169,18 @@ describe('resolveBaseRules', () => {
 describe('resolveCategories / resolvePlugins', () => {
   const lint: LintNode = { extends: [typescript] };
   test('categories merge from the extends chain', () => {
-    expect(resolveCategories(lint)).toEqual({
+    expect(resolveCategories(lint)).toStrictEqual({
       correctness: 'error',
       style: 'off',
     });
   });
   test('plugins resolve to the most-derived set', () => {
-    expect(resolvePlugins(lint)).toEqual([
+    expect(resolvePlugins(lint)).toStrictEqual([
       'eslint',
       'oxc',
       'unicorn',
       'typescript',
     ]);
-  });
-});
-
-describe('resolveForFile', () => {
-  const lint: LintNode = {
-    extends: [typescript],
-    rules: { 'no-console': 'error' },
-    overrides: [
-      {
-        files: ['**/*.test.ts'],
-        rules: { 'no-console': 'off', 'typescript/no-explicit-any': 'off' },
-      },
-    ],
-  };
-
-  test('applies matching overrides for the path', () => {
-    const res = resolveForFile(lint, 'tests/x.test.ts');
-    const byId = Object.fromEntries(res.rules.map((r) => [r.id, r]));
-    expect(res.matchedOverrides).toEqual(['**/*.test.ts']);
-    expect(byId['no-console']?.severity).toBe('off');
-    expect(byId['no-console']?.source).toContain('override');
-    expect(byId['typescript/no-explicit-any']?.severity).toBe('off');
-  });
-
-  test('non-matching path keeps the base config', () => {
-    const res = resolveForFile(lint, 'src/index.ts');
-    const byId = Object.fromEntries(res.rules.map((r) => [r.id, r]));
-    expect(res.matchedOverrides).toEqual([]);
-    expect(byId['no-console']?.severity).toBe('error');
   });
 });
 
@@ -247,7 +193,6 @@ describe('resolveEffective (with catalog)', () => {
         rules: { 'no-console': 'warn' },
       },
     ],
-    overrides: [{ files: ['**/*.test.ts'], rules: { 'no-console': 'off' } }],
   };
   // no-console: explicitly set -> warn; no-debugger: via category -> error;
   // unicorn/no-null: via category 'style' -> off; unicorn/prefer-at: nursery,
@@ -283,15 +228,6 @@ describe('resolveEffective (with catalog)', () => {
     expect(byId['unicorn/no-null']?.fixable).toBe(true);
     expect(byId['unicorn/no-null']?.plugin).toBe('unicorn');
     expect(byId['no-debugger']?.docsUrl).toBe('https://oxc.rs/no-debugger');
-  });
-
-  test('applies overrides for a file path', () => {
-    const byId = Object.fromEntries(
-      resolveEffective(lint, catalog, 'a/b.test.ts').map((r) => [r.id, r]),
-    );
-    expect(byId['no-console']?.severity).toBe('off');
-    expect(byId['no-console']?.source).toContain('override');
-    expect(matchedOverridesFor(lint, 'a/b.test.ts')).toEqual(['**/*.test.ts']);
   });
 
   test('includes configured rules absent from the catalog', () => {
