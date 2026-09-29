@@ -2,7 +2,13 @@ import type { RuleMeta } from './catalog.ts';
 import { compareRules } from './resolve-file.ts';
 import type { FileOverride } from './resolve-file.ts';
 import { normalizePluginName, normalizeRuleId, pluginOf } from './rule-id.ts';
-import type { EnrichedRule, LintNode, RuleValue, Severity } from './types.ts';
+import type {
+  EnrichedRule,
+  JsPlugin,
+  LintNode,
+  RuleValue,
+  Severity,
+} from './types.ts';
 
 /** The plugins built into oxlint. `eslint` is on in every config. */
 const BUILTIN_PLUGINS = new Set([
@@ -173,6 +179,17 @@ export function resolveOptions(lint: LintNode): Record<string, unknown> {
   return merged;
 }
 
+/** JS plugins load from every config along the chain. */
+export function resolveJsPlugins(lint: LintNode): JsPlugin[] {
+  const plugins = new Map<string, JsPlugin>();
+  for (const node of flattenExtends(lint)) {
+    for (const plugin of node.jsPlugins ?? []) {
+      plugins.set(JSON.stringify(plugin), plugin);
+    }
+  }
+  return [...plugins.values()];
+}
+
 /** Count the rules contributed by a preset across its whole extends chain. */
 export function countPresetRules(node: LintNode): number {
   const ids = new Set<string>();
@@ -287,6 +304,9 @@ export function resolveEffective(
 export type ResolvedOverride = FileOverride & {
   /** Label of the preset that declares it, or null for the config's own. */
   preset: string | null;
+  jsPlugins: JsPlugin[];
+  env: Record<string, boolean>;
+  globals: Record<string, unknown>;
 };
 
 /**
@@ -336,6 +356,9 @@ export function resolveOverrides(
         plugins,
         preset,
         rules,
+        jsPlugins: override.jsPlugins ?? [],
+        env: override.env ?? {},
+        globals: override.globals ?? {},
       };
     });
 }

@@ -322,7 +322,6 @@ function clientScript(): string {
     if (v === null || v === undefined) return '<span class="text-muted">null</span>';
     if (typeof v === 'string') return '<span class="text-yellow">"' + esc(v) + '"</span>';
     if (typeof v === 'number') return '<span class="text-blue">' + v + '</span>';
-    if (Array.isArray(v)) return '<span class="text-muted">[' + v.length + ' items]</span>';
     if (typeof v === 'object') return '<span class="text-muted">' + esc(JSON.stringify(v)) + '</span>';
     return esc(String(v));
   }
@@ -349,6 +348,10 @@ function clientScript(): string {
       ? ' <span class="text-muted text-small">except</span> ' + tags(o.excludeFiles)
       : '';
     return tags(o.files) + except;
+  }
+
+  function jsPluginLabel(plugin) {
+    return typeof plugin === 'string' ? plugin : plugin.specifier + ' as ' + plugin.name;
   }
 
   function optionsText(opts) {
@@ -498,6 +501,8 @@ function clientScript(): string {
 
     if (lint.plugins.length) html += '<div class="card"><div class="card-header">Plugins <span class="nav-badge">' + lint.plugins.length + '</span></div><div class="card-body">' + tags(lint.plugins) + '</div></div>';
 
+    if (lint.jsPlugins.length) html += '<div class="card"><div class="card-header">JS Plugins <span class="nav-badge">' + lint.jsPlugins.length + '</span></div><div class="card-body">' + tags(lint.jsPlugins.map(jsPluginLabel)) + '</div></div>';
+
     if (Object.keys(lint.categories).length) {
       var cats = Object.keys(lint.categories).map(function (c) { return badge(c + ': ' + lint.categories[c], lint.categories[c]); }).join(' ');
       html += '<div class="card"><div class="card-header">Categories (baseline)</div><div class="card-body">' + cats + '</div></div>';
@@ -545,16 +550,23 @@ function clientScript(): string {
     if (lint.overrides.length) {
       html += '<div class="card"><div class="card-header">Overrides <span class="nav-badge">' + lint.overrides.length + '</span></div>';
       lint.overrides.forEach(function (o) {
+        var sets = {};
+        if (Object.keys(o.env).length) sets.env = o.env;
+        if (Object.keys(o.globals).length) sets.globals = o.globals;
         html += '<div style="padding:10px 14px;border-bottom:1px solid var(--border)">' +
           '<div>' + overrideFiles(o) + '</div>' +
           '<div class="text-small text-muted" style="margin-top:4px">' + o.ruleCount + ' rule override' + (o.ruleCount === 1 ? '' : 's') +
           (o.preset === null ? '' : ' · inherited from ' + tags([o.preset])) + '</div>' +
-          (o.plugins ? '<div class="text-small text-muted" style="margin-top:4px">plugins: ' + tags(o.plugins) + '</div>' : '') + '</div>';
+          (o.plugins ? '<div class="text-small text-muted" style="margin-top:4px">plugins: ' + tags(o.plugins) + '</div>' : '') +
+          (o.jsPlugins.length ? '<div class="text-small text-muted" style="margin-top:4px">JS plugins: ' + tags(o.jsPlugins.map(jsPluginLabel)) + '</div>' : '') +
+          (Object.keys(sets).length ? kvTable(sets, '200px') : '') + '</div>';
       });
       html += '</div>';
     }
 
     if (Object.keys(lint.settings).length) html += '<div class="card"><div class="card-header">Settings</div>' + kvTable(lint.settings) + '</div>';
+    if (Object.keys(lint.env).length) html += '<div class="card"><div class="card-header">Env</div>' + kvTable(lint.env) + '</div>';
+    if (Object.keys(lint.globals).length) html += '<div class="card"><div class="card-header">Globals</div>' + kvTable(lint.globals) + '</div>';
     html += patternsCard('Ignore Patterns', lint.ignorePatterns);
     return html;
   }
@@ -688,7 +700,8 @@ function clientScript(): string {
   function renderTest(test) {
     var html = '<div class="section-title">test</div><div class="section-desc">vitest configuration</div>';
     if (!test || !Object.keys(test).length) return html + '<div class="card"><div class="empty">Enabled with default settings</div></div>';
-    if (Array.isArray(test.projects)) {
+    var hasProjects = Array.isArray(test.projects);
+    if (hasProjects) {
       html += '<div class="card"><div class="card-header">Projects</div>';
       test.projects.forEach(function (proj, i) {
         html += '<div style="padding:10px 14px;border-bottom:1px solid var(--border)">';
@@ -706,9 +719,12 @@ function clientScript(): string {
         }
         html += '</div>';
       });
-      return html + '</div>';
+      html += '</div>';
     }
-    return html + '<div class="card">' + kvTable(test, '200px') + '</div>';
+    var opts = {};
+    Object.keys(test).forEach(function (k) { if (!hasProjects || k !== 'projects') opts[k] = test[k]; });
+    if (Object.keys(opts).length) html += '<div class="card"><div class="card-header">Options</div>' + kvTable(opts, '200px') + '</div>';
+    return html;
   }
 
   function taskDetails(task) {

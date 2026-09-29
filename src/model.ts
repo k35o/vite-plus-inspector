@@ -5,6 +5,7 @@ import {
   inferPresetLabel,
   resolveCategories,
   resolveEffective,
+  resolveJsPlugins,
   resolveOptions,
   resolveOverrides,
   resolvePlugins,
@@ -16,6 +17,7 @@ import type {
   DefaultPackageCommand,
   EnrichedRule,
   FmtConfig,
+  JsPlugin,
   LintNode,
   PackConfig,
   RunConfig,
@@ -40,6 +42,9 @@ export type OverrideSummary = {
   plugins: string[] | null;
   /** Label of the preset that declares it, or null for the config's own. */
   preset: string | null;
+  jsPlugins: JsPlugin[];
+  env: Record<string, boolean>;
+  globals: Record<string, unknown>;
 };
 
 export type LintView = {
@@ -47,6 +52,9 @@ export type LintView = {
   settings: Record<string, unknown>;
   ignorePatterns: string[];
   plugins: string[];
+  jsPlugins: JsPlugin[];
+  env: Record<string, boolean>;
+  globals: Record<string, unknown>;
   categories: Record<string, Severity>;
   presets: PresetSummary[];
   rules: EnrichedRule[];
@@ -138,6 +146,9 @@ export function buildLintView(
     ruleCount: o.rules.length,
     plugins: o.plugins,
     preset: o.preset,
+    jsPlugins: o.jsPlugins,
+    env: o.env,
+    globals: o.globals,
   }));
 
   const plugins = [...new Set(rules.map((r) => r.plugin))].toSorted((a, b) =>
@@ -154,6 +165,11 @@ export function buildLintView(
     settings: lint.settings ?? {},
     ignorePatterns: lint.ignorePatterns ?? [],
     plugins: resolvePlugins(lint),
+    jsPlugins: resolveJsPlugins(lint),
+    // Not merged along the chain like categories: oxlint takes `env` and
+    // `globals` from the config itself and ignores the ones presets declare.
+    env: lint.env ?? {},
+    globals: lint.globals ?? {},
     categories: resolveCategories(lint),
     presets,
     rules,
@@ -246,8 +262,8 @@ export function buildInspectorData(
 
 /**
  * JSON for the browser. A config holds values JSON cannot carry (task
- * functions, plugin hooks, regular expressions), which would otherwise vanish
- * or turn into `null` / `{}`.
+ * functions, plugin hooks, regular expressions, `Infinity`, BigInts), which
+ * would otherwise vanish, turn into `null` / `{}`, or throw.
  */
 export function serializeInspectorData(data: InspectorData): string {
   return JSON.stringify(data, (_key, value: unknown) => {
@@ -255,6 +271,10 @@ export function serializeInspectorData(data: InspectorData): string {
       return `[Function: ${value.name || 'anonymous'}]`;
     }
     if (value instanceof RegExp) return String(value);
+    if (typeof value === 'number' && !Number.isFinite(value)) {
+      return String(value);
+    }
+    if (typeof value === 'bigint') return `${value}n`;
     return value;
   });
 }

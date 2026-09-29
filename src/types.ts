@@ -32,8 +32,10 @@ export type LintOverride = {
   files: string[];
   excludeFiles?: string[];
   plugins?: string[];
+  jsPlugins?: JsPlugin[];
   rules?: Record<string, RuleValue>;
   env?: Record<string, boolean>;
+  globals?: Record<string, unknown>;
 };
 
 export type FmtOverride = {

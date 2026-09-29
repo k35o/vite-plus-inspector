@@ -240,6 +240,113 @@ describe('page', () => {
     );
   });
 
+  test('a list option shows its items', () => {
+    expect(
+      section(
+        { pack: { entry: 'src/index.ts', format: ['esm', 'cjs'] } },
+        'pack',
+      ),
+    ).toContain(
+      '<td><span class="text-muted">[&quot;esm&quot;,&quot;cjs&quot;]</span></td>',
+    );
+  });
+
+  test('a test project given as a glob is listed', () => {
+    expect(section({ test: { projects: ['packages/*'] } }, 'test')).toContain(
+      '<div class="card-header">Projects</div><div style="padding:10px 14px;border-bottom:1px solid var(--border)"><div class="mono">packages/*</div></div></div>',
+    );
+  });
+
+  test('options set beside test projects are shown after them', () => {
+    expect(
+      section({ test: { globals: true, projects: ['packages/*'] } }, 'test'),
+    ).toContain(
+      '<div class="mono">packages/*</div></div></div><div class="card"><div class="card-header">Options</div><table><tbody><tr><td class="mono text-blue" style="width:200px">globals</td><td><span class="text-green">true</span></td></tr></tbody></table></div>',
+    );
+  });
+
+  test('a test block with nothing but projects has no options card', () => {
+    expect(
+      section({ test: { projects: ['packages/*'] } }, 'test'),
+    ).not.toContain('Options');
+  });
+
+  test('the lint section lists JS plugins from presets and the config', () => {
+    expect(
+      section(
+        {
+          lint: {
+            extends: [{ jsPlugins: ['eslint-plugin-regexp'] }],
+            jsPlugins: [{ name: 'tw', specifier: 'oxlint-tailwindcss' }],
+          },
+        },
+        'lint',
+      ),
+    ).toContain(
+      '<div class="card-header">JS Plugins <span class="nav-badge">2</span></div><div class="card-body"><span class="tag">eslint-plugin-regexp</span><span class="tag">oxlint-tailwindcss as tw</span></div>',
+    );
+  });
+
+  test('the lint section shows the environments', () => {
+    expect(
+      section({ lint: { env: { browser: true, node: false } } }, 'lint'),
+    ).toContain(
+      '<div class="card-header">Env</div><table><tbody><tr><td class="mono text-blue">browser</td><td><span class="text-green">true</span></td></tr><tr><td class="mono text-blue">node</td><td><span class="text-muted">false</span></td></tr></tbody></table>',
+    );
+  });
+
+  test('the lint section shows the globals', () => {
+    expect(
+      section({ lint: { globals: { Bun: 'readonly' } } }, 'lint'),
+    ).toContain(
+      '<div class="card-header">Globals</div><table><tbody><tr><td class="mono text-blue">Bun</td><td><span class="text-yellow">"readonly"</span></td></tr></tbody></table>',
+    );
+  });
+
+  test('an override shows the JS plugins it loads, an aliased one with its alias', () => {
+    expect(
+      section(
+        {
+          lint: {
+            overrides: [
+              {
+                files: ['**/*.test.ts'],
+                jsPlugins: [
+                  'eslint-plugin-regexp',
+                  { name: 'tw', specifier: 'oxlint-tailwindcss' },
+                ],
+              },
+            ],
+          },
+        },
+        'lint',
+      ),
+    ).toContain(
+      '0 rule overrides</div><div class="text-small text-muted" style="margin-top:4px">JS plugins: <span class="tag">eslint-plugin-regexp</span><span class="tag">oxlint-tailwindcss as tw</span></div></div>',
+    );
+  });
+
+  test('an override shows the env and globals it sets', () => {
+    expect(
+      section(
+        {
+          lint: {
+            overrides: [
+              {
+                files: ['**/*.test.ts'],
+                env: { vitest: true },
+                globals: { Bun: 'readonly' },
+              },
+            ],
+          },
+        },
+        'lint',
+      ),
+    ).toContain(
+      '0 rule overrides</div><table><tbody><tr><td class="mono text-blue" style="width:200px">env</td><td><span class="text-muted">{&quot;vitest&quot;:true}</span></td></tr><tr><td class="mono text-blue" style="width:200px">globals</td><td><span class="text-muted">{&quot;Bun&quot;:&quot;readonly&quot;}</span></td></tr></tbody></table></div>',
+    );
+  });
+
   test('an override applies to a file its files pattern matches', () => {
     expect(resolveStatus('src/a.test.ts')).toBe(
       'Matched overrides: <span class="tag">**/*.test.ts</span>',

@@ -6,6 +6,7 @@ import {
   normalizeSeverity,
   resolveCategories,
   resolveEffective,
+  resolveJsPlugins,
   resolveOptions,
   resolveOverrides,
   resolvePlugins,
@@ -100,7 +101,7 @@ describe('ruleDocsUrl', () => {
 const base: LintNode = {
   plugins: ['eslint', 'oxc', 'unicorn'],
   categories: { correctness: 'error', style: 'off' },
-  rules: { 'no-console': 'warn', eqeqeq: 'error' },
+  rules: { 'no-console': 'warn', eqeqeq: 'error', 'no-var': 'error' },
 };
 const typescript: LintNode = {
   extends: [base],
@@ -228,6 +229,43 @@ describe('resolveOptions', () => {
   });
 });
 
+describe('resolveJsPlugins', () => {
+  test('gathers the chain’s plugins, ancestors first', () => {
+    expect(
+      resolveJsPlugins({
+        extends: [{ jsPlugins: ['eslint-plugin-regexp'] }],
+        jsPlugins: [{ name: 'tw', specifier: 'oxlint-tailwindcss' }],
+      }),
+    ).toStrictEqual([
+      'eslint-plugin-regexp',
+      { name: 'tw', specifier: 'oxlint-tailwindcss' },
+    ]);
+  });
+
+  test('lists a plugin reached through two presets once', () => {
+    const regexp: LintNode = { jsPlugins: ['eslint-plugin-regexp'] };
+    expect(
+      resolveJsPlugins({
+        extends: [{ extends: [regexp] }, { extends: [regexp] }],
+      }),
+    ).toStrictEqual(['eslint-plugin-regexp']);
+  });
+
+  test('keeps a plugin and its aliased copy apart', () => {
+    expect(
+      resolveJsPlugins({
+        jsPlugins: [
+          'eslint-plugin-import',
+          { name: 'import-js', specifier: 'eslint-plugin-import' },
+        ],
+      }),
+    ).toStrictEqual([
+      'eslint-plugin-import',
+      { name: 'import-js', specifier: 'eslint-plugin-import' },
+    ]);
+  });
+});
+
 describe('resolveEffective', () => {
   const catalog: RuleMeta[] = [
     meta('no-console', 'suspicious'),
@@ -269,6 +307,11 @@ describe('resolveEffective', () => {
   test('a preset wins over the preset it extends', () => {
     const lint: LintNode = { extends: [typescript] };
     expect(resolved(lint)['no-console']).toBe('error (typescript)');
+  });
+
+  test('an entry only the preset of a preset has is attributed to that one', () => {
+    const lint: LintNode = { extends: [typescript] };
+    expect(resolved(lint)['no-var']).toBe('error (base)');
   });
 
   test('a rule without an entry takes the severity of its category', () => {
@@ -481,6 +524,7 @@ describe('resolveEffective', () => {
         ),
       ).toStrictEqual({
         'no-console': 'error (typescript)',
+        'no-var': 'error (base)',
         'typescript/no-explicit-any': 'error (typescript)',
         eqeqeq: 'off (config)',
       });
@@ -722,7 +766,7 @@ describe('resolveOverrides', () => {
 
 describe('countPresetRules', () => {
   test('counts unique rule ids across the chain', () => {
-    // base: no-console, eqeqeq (2) + typescript: no-explicit-any, no-console (no-console dup) => 3 unique
-    expect(countPresetRules(typescript)).toBe(3);
+    // base: no-console, eqeqeq, no-var (3) + typescript: no-explicit-any, no-console (no-console dup) => 4 unique
+    expect(countPresetRules(typescript)).toBe(4);
   });
 });
