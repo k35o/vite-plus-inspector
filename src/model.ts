@@ -5,6 +5,7 @@ import {
   inferPresetLabel,
   resolveCategories,
   resolveEffective,
+  resolveOptions,
   resolveOverrides,
   resolvePlugins,
 } from './resolve.ts';
@@ -143,7 +144,7 @@ export function buildLintView(
   ].toSorted((a, b) => a.localeCompare(b));
 
   return {
-    options: lint.options ?? {},
+    options: resolveOptions(lint),
     settings: lint.settings ?? {},
     ignorePatterns: lint.ignorePatterns ?? [],
     plugins: resolvePlugins(lint),

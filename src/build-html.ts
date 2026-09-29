@@ -213,6 +213,7 @@ function styles(): string {
       text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap;
       background: var(--surface2); border: 1px solid var(--border); color: var(--muted);
     }
+    .flag-idle { text-decoration: line-through; opacity: 0.6; }
 
     .resolve-bar {
       padding: 14px 16px; border-bottom: 1px solid var(--border);
@@ -358,7 +359,11 @@ function clientScript(): string {
   function flags(r) {
     var out = '';
     if (r.fixable) out += '<span class="flag" title="Auto-fixable">fix</span>';
-    if (r.typeAware) out += '<span class="flag" title="Requires type information">type</span>';
+    if (r.typeAware) {
+      out += data.lint.options.typeAware === true
+        ? '<span class="flag" title="Requires type information">type</span>'
+        : '<span class="flag flag-idle" title="Does not run: it requires type information, and options.typeAware is not enabled">type</span>';
+    }
     return out ? '<span class="flags">' + out + '</span>' : '';
   }
 

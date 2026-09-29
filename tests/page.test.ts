@@ -249,6 +249,34 @@ describe('page', () => {
     ]);
   });
 
+  test('a type-aware rule is marked as running when typeAware is on', () => {
+    expect(
+      ruleRow(
+        { options: { typeAware: true } },
+        'typescript/no-floating-promises',
+      ),
+    ).toContain(
+      '<span class="flag" title="Requires type information">type</span>',
+    );
+  });
+
+  test('a type-aware rule is marked as not running when typeAware is not on', () => {
+    expect(ruleRow({}, 'typescript/no-floating-promises')).toContain(
+      '<span class="flag flag-idle" title="Does not run: it requires type information, and options.typeAware is not enabled">type</span>',
+    );
+  });
+
+  test('typeAware turned on by an extended preset counts', () => {
+    expect(
+      ruleRow(
+        { extends: [{ options: { typeAware: true } }] },
+        'typescript/no-floating-promises',
+      ),
+    ).toContain(
+      '<span class="flag" title="Requires type information">type</span>',
+    );
+  });
+
   test('a rule of a JS plugin is not linked to oxc.rs', () => {
     expect(
       ruleRow(

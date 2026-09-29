@@ -162,6 +162,17 @@ export function resolvePlugins(lint: LintNode): string[] {
   return [...plugins];
 }
 
+/** Options merged key by key across the extends chain; the last one wins. */
+export function resolveOptions(lint: LintNode): Record<string, unknown> {
+  const merged: Record<string, unknown> = {};
+  for (const node of flattenExtends(lint)) {
+    for (const [key, value] of Object.entries(node.options ?? {})) {
+      if (value !== undefined) merged[key] = value;
+    }
+  }
+  return merged;
+}
+
 /** Count the rules contributed by a preset across its whole extends chain. */
 export function countPresetRules(node: LintNode): number {
   const ids = new Set<string>();

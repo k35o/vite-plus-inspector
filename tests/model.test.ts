@@ -105,6 +105,13 @@ describe('buildLintView', () => {
     overrides: [{ files: ['*.test.ts'], rules: { 'no-console': 'off' } }],
   };
 
+  test('takes the options of the presets it extends', () => {
+    expect(
+      buildLintView({ extends: [preset], options: { typeCheck: true } })
+        .options,
+    ).toStrictEqual({ typeAware: true, typeCheck: true });
+  });
+
   test('takes the overrides of the presets it extends', () => {
     expect(
       buildLintView({

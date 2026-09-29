@@ -15,7 +15,8 @@ used to show rules as enabled that oxlint never runs.
 - Override patterns match like oxlint's: a pattern without a slash matches at
   any depth, a leading `./` is dropped, and `[ab]`, `[!a]` and a leading `!`
   are understood.
-- Overrides of extended presets are taken into account.
+- Overrides and `options` of extended presets are taken into account.
 - Rule ids written through an alias (`@typescript-eslint/…`, `react-hooks/…`,
   `import-x/…`, …) are recognized as the rule they name.
 - Rules of JS plugins no longer link to oxc.rs pages that do not exist.
+- A type-aware rule is marked as not running when `options.typeAware` is off.

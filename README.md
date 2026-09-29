@@ -55,7 +55,8 @@ Options:
     `nextjs → react → typescript → base`), category baselines and individual
     rules merge last-wins, and each rule is attributed to its source (`base`,
     `typescript`, `config`, `category: …`). A rule is on only when its plugin
-    is enabled.
+    is enabled, and a type-aware rule is marked when `options.typeAware` is off,
+    since oxlint does not run it then.
   - **Filters** by state (error/warn/off), plugin, category, plus quick views
     like _explicitly configured_ and _default-on but disabled_.
   - **Resolve for a file path** — type `apps/main/foo.test.tsx` and see the

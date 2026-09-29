@@ -6,6 +6,7 @@ import {
   normalizeSeverity,
   resolveCategories,
   resolveEffective,
+  resolveOptions,
   resolveOverrides,
   resolvePlugins,
   ruleDocsUrl,
@@ -204,6 +205,26 @@ describe('resolvePlugins', () => {
     expect(resolvePlugins({ plugins: ['react-hooks', 'react'] })).toStrictEqual(
       ['eslint', 'react'],
     );
+  });
+});
+
+describe('resolveOptions', () => {
+  test('options merge key by key, and the config wins over what it extends', () => {
+    expect(
+      resolveOptions({
+        options: { typeAware: true },
+        extends: [
+          {
+            options: { typeAware: false, typeCheck: true },
+            extends: [{ options: { denyWarnings: true } }],
+          },
+        ],
+      }),
+    ).toStrictEqual({ denyWarnings: true, typeAware: true, typeCheck: true });
+  });
+
+  test('a config without options has none', () => {
+    expect(resolveOptions({})).toStrictEqual({});
   });
 });
 
