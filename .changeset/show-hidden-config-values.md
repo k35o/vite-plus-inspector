@@ -10,3 +10,4 @@ Show config values the inspector used to drop or mangle.
   their count.
 - `Infinity` and `NaN` are shown as written instead of `null`, so a
   `testTimeout: Infinity` reads as the disabled timeout it is.
+- A BigInt in the config no longer stops the inspector.

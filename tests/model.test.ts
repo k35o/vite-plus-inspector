@@ -409,6 +409,12 @@ describe('serializeInspectorData', () => {
     });
   });
 
+  test('a BigInt is shown as its literal', () => {
+    expect(received({ test: { seed: 10n } })).toMatchObject({
+      test: { seed: '10n' },
+    });
+  });
+
   test('a regular expression is shown as its literal', () => {
     expect(
       received({ pack: { deps: { neverBundle: [/^node:/u, 'x'] } } }),
