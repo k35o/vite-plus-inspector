@@ -5,6 +5,7 @@ vite-plus-inspector@0.1.1:
 vite-plus-inspector@0.2.0:
   dir: ""
   intents:
+    - cli-version
     - override-origin
     - oxlint-rule-resolution
     - show-hidden-config-values
