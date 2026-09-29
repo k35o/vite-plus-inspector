@@ -322,7 +322,6 @@ function clientScript(): string {
     if (v === null || v === undefined) return '<span class="text-muted">null</span>';
     if (typeof v === 'string') return '<span class="text-yellow">"' + esc(v) + '"</span>';
     if (typeof v === 'number') return '<span class="text-blue">' + v + '</span>';
-    if (Array.isArray(v)) return '<span class="text-muted">[' + v.length + ' items]</span>';
     if (typeof v === 'object') return '<span class="text-muted">' + esc(JSON.stringify(v)) + '</span>';
     return esc(String(v));
   }

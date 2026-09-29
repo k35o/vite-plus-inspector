@@ -186,6 +186,17 @@ describe('page', () => {
     ).toContain('<td>&lt;img src=x onerror=1&gt;</td>');
   });
 
+  test('a list option shows its items', () => {
+    expect(
+      section(
+        { pack: { entry: 'src/index.ts', format: ['esm', 'cjs'] } },
+        'pack',
+      ),
+    ).toContain(
+      '<td><span class="text-muted">[&quot;esm&quot;,&quot;cjs&quot;]</span></td>',
+    );
+  });
+
   test('an override applies to a file its files pattern matches', () => {
     expect(resolveStatus('src/a.test.ts')).toBe(
       'Matched overrides: <span class="tag">**/*.test.ts</span>',
