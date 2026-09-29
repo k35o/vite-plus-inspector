@@ -547,7 +547,9 @@ function clientScript(): string {
       lint.overrides.forEach(function (o) {
         html += '<div style="padding:10px 14px;border-bottom:1px solid var(--border)">' +
           '<div>' + overrideFiles(o) + '</div>' +
-          '<div class="text-small text-muted" style="margin-top:4px">' + o.ruleCount + ' rule override' + (o.ruleCount === 1 ? '' : 's') + '</div></div>';
+          '<div class="text-small text-muted" style="margin-top:4px">' + o.ruleCount + ' rule override' + (o.ruleCount === 1 ? '' : 's') +
+          (o.preset === null ? '' : ' · inherited from ' + tags([o.preset])) + '</div>' +
+          (o.plugins ? '<div class="text-small text-muted" style="margin-top:4px">plugins: ' + tags(o.plugins) + '</div>' : '') + '</div>';
       });
       html += '</div>';
     }

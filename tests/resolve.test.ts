@@ -550,6 +550,32 @@ describe('resolveOverrides', () => {
     ).toStrictEqual([['grand/**'], ['first/**'], ['second/**'], ['root/**']]);
   });
 
+  test('an override names the preset that declares it, and none when the config does', () => {
+    expect(
+      resolveOverrides(
+        {
+          overrides: [{ files: ['root/**'] }],
+          extends: [
+            {
+              plugins: ['typescript'],
+              overrides: [{ files: ['first/**'] }],
+              extends: [
+                { plugins: ['unicorn'], overrides: [{ files: ['grand/**'] }] },
+              ],
+            },
+            { plugins: ['vitest'], overrides: [{ files: ['second/**'] }] },
+          ],
+        },
+        catalog,
+      ).map((o) => [o.files, o.preset]),
+    ).toStrictEqual([
+      [['grand/**'], 'base'],
+      [['first/**'], 'typescript'],
+      [['second/**'], 'test'],
+      [['root/**'], null],
+    ]);
+  });
+
   test('carries the files an override excludes', () => {
     expect(
       resolveOverrides(

@@ -284,6 +284,11 @@ export function resolveEffective(
     .toSorted(compareRules);
 }
 
+export type ResolvedOverride = FileOverride & {
+  /** Label of the preset that declares it, or null for the config's own. */
+  preset: string | null;
+};
+
 /**
  * Every override that applies to the config, those of the extended presets
  * first, each with the rules it sets. An override sets the rules of the
@@ -292,13 +297,18 @@ export function resolveEffective(
 export function resolveOverrides(
   lint: LintNode,
   catalog: RuleMeta[],
-): FileOverride[] {
+): ResolvedOverride[] {
   const byId = new Map(catalog.map((meta) => [meta.id, meta]));
   const base = resolvePlugins(lint);
 
   return flattenExtends(lint)
-    .flatMap((node) => node.overrides ?? [])
-    .map((override) => {
+    .flatMap((node) =>
+      (node.overrides ?? []).map((override) => ({
+        override,
+        preset: node === lint ? null : inferPresetLabel(node),
+      })),
+    )
+    .map(({ override, preset }) => {
       const plugins = override.plugins
         ? [
             ...new Set([
@@ -324,6 +334,7 @@ export function resolveOverrides(
         files: override.files,
         excludeFiles: override.excludeFiles ?? [],
         plugins,
+        preset,
         rules,
       };
     });

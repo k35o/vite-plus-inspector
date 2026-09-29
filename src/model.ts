@@ -36,6 +36,10 @@ export type OverrideSummary = {
   files: string[];
   excludeFiles: string[];
   ruleCount: number;
+  /** The plugins the override names, `eslint` included, or null when it names none. */
+  plugins: string[] | null;
+  /** Label of the preset that declares it, or null for the config's own. */
+  preset: string | null;
 };
 
 export type LintView = {
@@ -132,6 +136,8 @@ export function buildLintView(
     files: o.files,
     excludeFiles: o.excludeFiles,
     ruleCount: o.rules.length,
+    plugins: o.plugins,
+    preset: o.preset,
   }));
 
   const plugins = [...new Set(rules.map((r) => r.plugin))].toSorted((a, b) =>
