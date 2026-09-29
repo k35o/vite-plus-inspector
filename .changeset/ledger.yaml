@@ -2,3 +2,10 @@ vite-plus-inspector@0.1.1:
   dir: ""
   intents:
     - switch-release-automation
+vite-plus-inspector@0.2.0:
+  dir: ""
+  intents:
+    - override-origin
+    - oxlint-rule-resolution
+    - show-hidden-config-values
+    - vite-plus-v1
