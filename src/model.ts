@@ -1,11 +1,11 @@
 import type { RuleMeta } from './catalog.ts';
+import type { FileOverride } from './resolve-file.ts';
 import {
   countPresetRules,
   inferPresetLabel,
-  resolveBaseRules,
   resolveCategories,
   resolveEffective,
-  resolveOverride,
+  resolveOverrides,
   resolvePlugins,
 } from './resolve.ts';
 import type {
@@ -17,7 +17,6 @@ import type {
   FmtConfig,
   LintNode,
   PackConfig,
-  ResolvedRule,
   RunConfig,
   RunTask,
   Severity,
@@ -48,14 +47,8 @@ export type LintView = {
   rules: EnrichedRule[];
   overrides: OverrideSummary[];
   counts: { error: number; warn: number; off: number };
-  /** Per-override enriched rules, for resolving a file path client-side. */
-  resolve: {
-    overrides: Array<{
-      files: string[];
-      excludeFiles: string[];
-      rules: EnrichedRule[];
-    }>;
-  };
+  /** What `resolveForFile` layers onto `rules` for a file path. */
+  resolve: { overrides: FileOverride[] };
   /** Distinct plugins and categories present in `rules`, for filter menus. */
   facets: { plugins: string[]; categories: string[] };
   /** Whether the full oxlint rule catalog was available. */
@@ -121,23 +114,6 @@ function severityCounts(rules: EnrichedRule[]): LintView['counts'] {
   return counts;
 }
 
-function pluginOf(id: string): string {
-  return id.includes('/') ? id.slice(0, id.indexOf('/')) : 'eslint';
-}
-
-/** Promote a bare resolved rule to the enriched shape when no catalog exists. */
-function withoutCatalog(rule: ResolvedRule): EnrichedRule {
-  return {
-    ...rule,
-    plugin: pluginOf(rule.id),
-    category: null,
-    typeAware: false,
-    fixable: false,
-    defaultOn: false,
-    configured: true,
-  };
-}
-
 export function buildLintView(
   lint: LintNode,
   catalog?: RuleMeta[] | null,
@@ -149,28 +125,13 @@ export function buildLintView(
     ruleCount: countPresetRules(preset),
   }));
 
-  const rules: EnrichedRule[] =
-    catalog && catalog.length > 0
-      ? resolveEffective(lint, catalog)
-      : resolveBaseRules(lint).map((rule) => withoutCatalog(rule));
-
-  const overrideList = (lint.overrides ?? []).map((o) => ({
-    files: o.files,
-    excludeFiles: o.excludeFiles ?? [],
-    rules: o.rules ?? {},
-  }));
-  const overrides: OverrideSummary[] = overrideList.map((o) => ({
+  const rules = resolveEffective(lint, catalog ?? []);
+  const resolve = { overrides: resolveOverrides(lint, catalog ?? []) };
+  const overrides: OverrideSummary[] = resolve.overrides.map((o) => ({
     files: o.files,
     excludeFiles: o.excludeFiles,
-    ruleCount: Object.keys(o.rules).length,
+    ruleCount: o.rules.length,
   }));
-  const resolve = {
-    overrides: overrideList.map((o) => ({
-      files: o.files,
-      excludeFiles: o.excludeFiles,
-      rules: resolveOverride(o.files, o.rules, catalog ?? []),
-    })),
-  };
 
   const plugins = [...new Set(rules.map((r) => r.plugin))].toSorted((a, b) =>
     a.localeCompare(b),

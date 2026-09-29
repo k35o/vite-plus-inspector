@@ -97,6 +97,58 @@ describe('buildLintView', () => {
     expect(view.options).toStrictEqual({ typeAware: true });
     expect(view.ignorePatterns).toStrictEqual(['CHANGELOG.md']);
   });
+
+  const preset: LintNode = {
+    options: { typeAware: true },
+    settings: { react: { version: '18.0.0' } },
+    ignorePatterns: ['preset-ignored/**'],
+    overrides: [{ files: ['*.test.ts'], rules: { 'no-console': 'off' } }],
+  };
+
+  test('takes the overrides of the presets it extends', () => {
+    expect(
+      buildLintView({
+        extends: [preset],
+        overrides: [{ files: ['src/cli.ts'], rules: { 'no-console': 'off' } }],
+      }).overrides,
+    ).toStrictEqual([
+      { files: ['*.test.ts'], excludeFiles: [], ruleCount: 1 },
+      { files: ['src/cli.ts'], excludeFiles: [], ruleCount: 1 },
+    ]);
+  });
+
+  test('leaves the settings of the presets it extends out', () => {
+    expect(buildLintView({ extends: [preset] }).settings).toStrictEqual({});
+  });
+
+  test('leaves the ignore patterns of the presets it extends out', () => {
+    expect(buildLintView({ extends: [preset] }).ignorePatterns).toStrictEqual(
+      [],
+    );
+  });
+
+  test('lists the enabled plugins, those of the presets included', () => {
+    expect(view.plugins).toStrictEqual([
+      'eslint',
+      'oxc',
+      'typescript',
+      'unicorn',
+    ]);
+  });
+
+  test('counts the rules an override sets, not the ones oxlint drops', () => {
+    expect(
+      buildLintView({
+        plugins: [],
+        overrides: [
+          {
+            files: ['*.tsx'],
+            rules: { 'react/jsx-key': 'error', 'no-console': 'off' },
+          },
+        ],
+      }).overrides,
+    ).toStrictEqual([{ files: ['*.tsx'], excludeFiles: [], ruleCount: 1 }]);
+  });
 });
 
 describe('buildInspectorData', () => {

@@ -1,5 +1,6 @@
 import { serializeInspectorData } from './model.ts';
 import type { InspectorData } from './model.ts';
+import { compareRules, resolveForFile } from './resolve-file.ts';
 
 function escapeHtml(s: string): string {
   return s
@@ -282,12 +283,15 @@ function styles(): string {
  * The browser-side renderer. Written without backticks or `${` so it can be
  * embedded verbatim inside this module's template literal. It reads the
  * pre-resolved view-model from window.__INSPECTOR__ and renders sections;
- * the lint "resolve for file" box layers matching overrides on in the page.
+ * the lint "resolve for file" box layers matching overrides on in the page,
+ * with the functions of resolve-file.ts.
  */
 function clientScript(): string {
   return `
 (function () {
   var data = window.__INSPECTOR__;
+  var compareRules = ${String(compareRules)};
+  var resolveForFile = ${String(resolveForFile)};
 
   var SECTIONS = [
     { id: 'overview', label: 'Overview', sub: '' },
@@ -589,53 +593,6 @@ function clientScript(): string {
     if (info) info.textContent = 'Showing ' + visible + ' of ' + rows.length + ' rules';
   }
 
-  // File resolution runs in the page so a static export needs no server.
-  function globToRe(glob) {
-    var re = '';
-    for (var i = 0; i < glob.length; i++) {
-      var c = glob[i];
-      if (c === '*') {
-        if (glob[i + 1] === '*') {
-          if (glob[i + 2] === '/') { re += '(?:.*/)?'; i += 2; }
-          else { re += '.*'; i += 1; }
-        } else { re += '[^/]*'; }
-      } else if (c === '?') { re += '[^/]'; }
-      else if (c === '{') { re += '(?:'; }
-      else if (c === '}') { re += ')'; }
-      else if (c === ',') { re += '|'; }
-      else if (c === '/') { re += '/'; }
-      else if ('.+^$()|[]'.indexOf(c) !== -1 || c === '\\\\') { re += '\\\\' + c; }
-      else { re += c; }
-    }
-    return new RegExp('^' + re + '$');
-  }
-
-  function sortRules(a, b) {
-    var ord = { error: 0, warn: 1, off: 2 };
-    return (ord[a.severity] - ord[b.severity]) ||
-      (Number(b.configured) - Number(a.configured)) ||
-      a.id.localeCompare(b.id);
-  }
-
-  function matchesAny(globs, file) {
-    return globs.some(function (g) { return globToRe(g).test(file); });
-  }
-
-  function resolveForFileClient(file) {
-    var byId = {};
-    data.lint.rules.forEach(function (r) { byId[r.id] = r; });
-    var matched = [];
-    data.lint.resolve.overrides.forEach(function (o) {
-      if (matchesAny(o.files, file) && !matchesAny(o.excludeFiles, file)) {
-        matched.push(o.files.join(', '));
-        o.rules.forEach(function (r) { byId[r.id] = r; });
-      }
-    });
-    var rules = Object.keys(byId).map(function (k) { return byId[k]; });
-    rules.sort(sortRules);
-    return { rules: rules, matchedOverrides: matched };
-  }
-
   function onResolve() {
     var input = document.getElementById('resolve-input');
     var status = document.getElementById('resolve-status');
@@ -650,10 +607,12 @@ function clientScript(): string {
       applyFilter();
       return;
     }
-    var res = resolveForFileClient(file);
-    container.innerHTML = rulesTable(res.rules);
+    // File resolution runs in the page so a static export needs no server.
+    var res = resolveForFile(data.lint, file);
+    var rules = res.rules.slice().sort(compareRules);
+    container.innerHTML = rulesTable(rules);
     var c = { error: 0, warn: 0, off: 0 };
-    res.rules.forEach(function (r) { c[r.severity]++; });
+    rules.forEach(function (r) { c[r.severity]++; });
     if (counts) counts.innerHTML = countsBadges(c);
     if (status) {
       status.innerHTML = res.matchedOverrides.length

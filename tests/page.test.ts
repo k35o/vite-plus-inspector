@@ -1,8 +1,9 @@
 import { runInNewContext } from 'node:vm';
 
 import { buildHtml } from '../src/build-html.ts';
+import type { RuleMeta } from '../src/catalog.ts';
 import { buildInspectorData } from '../src/model.ts';
-import type { VitePlusConfig } from '../src/types.ts';
+import type { LintNode, VitePlusConfig } from '../src/types.ts';
 
 type El = {
   innerHTML: string;
@@ -13,8 +14,10 @@ type El = {
 };
 
 /** Runs the page's own scripts against a DOM that only stores what is written. */
-function open(config: VitePlusConfig) {
-  const html = buildHtml(buildInspectorData(config, '/p/vite.config.ts'));
+function open(config: VitePlusConfig, catalog?: RuleMeta[]) {
+  const html = buildHtml(
+    buildInspectorData(config, '/p/vite.config.ts', catalog),
+  );
   const elements = new Map<string, El>();
   const el = (id: string): El => {
     let found = elements.get(id);
@@ -86,6 +89,37 @@ function resolveStatus(file: string): string {
   page.el('resolve-input').value = file;
   page.el('resolve-input').listeners['input']?.();
   return page.el('resolve-status').innerHTML;
+}
+
+const catalog: RuleMeta[] = [
+  {
+    id: 'promise/no-new-statics',
+    plugin: 'promise',
+    category: 'correctness',
+    typeAware: false,
+    fixable: true,
+    defaultOn: false,
+    docsUrl: 'https://oxc.rs/promise/no-new-statics',
+  },
+  {
+    id: 'typescript/no-floating-promises',
+    plugin: 'typescript',
+    category: 'correctness',
+    typeAware: true,
+    fixable: false,
+    defaultOn: true,
+    docsUrl: 'https://oxc.rs/typescript/no-floating-promises',
+  },
+];
+
+/** The table row of a rule in the lint section, once `file` is typed in. */
+function ruleRow(lint: LintNode, id: string, file = ''): string {
+  const page = open({ lint }, catalog);
+  page.go('lint');
+  page.el('resolve-input').value = file;
+  page.el('resolve-input').listeners['input']?.();
+  const rows = page.el('rules-container').innerHTML.split('<tr ');
+  return rows.find((row) => row.startsWith(`data-name="${id}"`)) ?? '';
 }
 
 describe('page', () => {
@@ -161,6 +195,68 @@ describe('page', () => {
   test('an override skips a file its excludeFiles pattern matches', () => {
     expect(resolveStatus('src/gen.test.ts')).toBe(
       'No overrides matched — base config applies.',
+    );
+  });
+
+  const enablesPromise: LintNode = {
+    overrides: [{ files: ['tests/**'], plugins: ['promise'] }],
+  };
+
+  test('a rule of a plugin that is not enabled is off', () => {
+    expect(ruleRow(enablesPromise, 'promise/no-new-statics')).toContain(
+      'data-src="plugin disabled" data-sev="off"',
+    );
+  });
+
+  test('a rule is on for a file whose override enables its plugin', () => {
+    expect(
+      ruleRow(enablesPromise, 'promise/no-new-statics', 'tests/a.test.ts'),
+    ).toContain('data-src="default" data-sev="warn"');
+  });
+
+  test('a rule stays off for a file the override does not match', () => {
+    expect(
+      ruleRow(enablesPromise, 'promise/no-new-statics', 'src/a.ts'),
+    ).toContain('data-src="plugin disabled" data-sev="off"');
+  });
+
+  test('the rules resolved for a file list the enabled ones first', () => {
+    const page = open({ lint: enablesPromise }, [
+      ...catalog,
+      {
+        id: 'promise/avoid-new',
+        plugin: 'promise',
+        category: 'style',
+        typeAware: false,
+        fixable: false,
+        defaultOn: false,
+        docsUrl: 'https://oxc.rs/promise/avoid-new',
+      },
+    ]);
+    page.go('lint');
+    page.el('resolve-input').value = 'tests/a.test.ts';
+    page.el('resolve-input').listeners['input']?.();
+    expect(
+      [
+        ...page
+          .el('rules-container')
+          .innerHTML.matchAll(/data-name="(?<id>[^"]+)"/gu),
+      ].map((match) => match.groups?.['id']),
+    ).toStrictEqual([
+      'promise/no-new-statics',
+      'typescript/no-floating-promises',
+      'promise/avoid-new',
+    ]);
+  });
+
+  test('a rule of a JS plugin is not linked to oxc.rs', () => {
+    expect(
+      ruleRow(
+        { rules: { 'regexp/no-dupe-disjunctions': 'error' } },
+        'regexp/no-dupe-disjunctions',
+      ),
+    ).toContain(
+      '<td><span class="mono">regexp/no-dupe-disjunctions</span></td>',
     );
   });
 });

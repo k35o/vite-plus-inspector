@@ -50,14 +50,17 @@ Options:
     catalog (800+ rules) is pulled from `vp lint --rules`, and each rule shows
     its **effective severity**, **category**, whether it's **auto-fixable** or
     **type-aware**, and a link to its [oxc.rs](https://oxc.rs) docs.
-  - **Effective severities** are resolved, not just declared: the `extends`
-    chain is flattened recursively (e.g. `nextjs → react → typescript → base`),
-    category baselines and individual rules merge last-wins, and each rule is
-    attributed to its source (`base`, `typescript`, `config`, `category: …`).
+  - **Effective severities** are resolved the way oxlint resolves them, not
+    just declared: the `extends` chain is flattened recursively (e.g.
+    `nextjs → react → typescript → base`), category baselines and individual
+    rules merge last-wins, and each rule is attributed to its source (`base`,
+    `typescript`, `config`, `category: …`). A rule is on only when its plugin
+    is enabled.
   - **Filters** by state (error/warn/off), plugin, category, plus quick views
     like _explicitly configured_ and _default-on but disabled_.
   - **Resolve for a file path** — type `apps/main/foo.test.tsx` and see the
-    rules that actually apply, with matching `overrides` layered in.
+    rules that actually apply, with matching `overrides` layered in: the ones
+    of extended presets too, along with the plugins an override enables.
 - **fmt / check / staged / pack / defaultPackage / test / run / create** —
   options, ignore patterns, overrides, entry points, tasks and more.
 - **Live reload** — edits to `vite.config.ts` refresh the inspector

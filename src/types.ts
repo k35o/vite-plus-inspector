@@ -161,4 +161,9 @@ export type EnrichedRule = ResolvedRule & {
   defaultOn: boolean;
   /** True when the severity comes from an explicit rule entry (not a category baseline or default). */
   configured: boolean;
+  /**
+   * What the rule's category gives it once an override enables its plugin.
+   * Only on rules that are off because their plugin is not enabled.
+   */
+  pluginBaseline?: { severity: Severity; source: string };
 };
