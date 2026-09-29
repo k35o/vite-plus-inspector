@@ -71,7 +71,13 @@ describe('buildLintView', () => {
 
   test('summarizes overrides', () => {
     expect(view.overrides).toStrictEqual([
-      { files: ['tests/**'], excludeFiles: [], ruleCount: 1 },
+      {
+        files: ['tests/**'],
+        excludeFiles: [],
+        ruleCount: 1,
+        plugins: null,
+        preset: null,
+      },
     ]);
   });
 
@@ -99,6 +105,7 @@ describe('buildLintView', () => {
   });
 
   const preset: LintNode = {
+    plugins: ['vitest'],
     options: { typeAware: true },
     settings: { react: { version: '18.0.0' } },
     ignorePatterns: ['preset-ignored/**'],
@@ -119,8 +126,36 @@ describe('buildLintView', () => {
         overrides: [{ files: ['src/cli.ts'], rules: { 'no-console': 'off' } }],
       }).overrides,
     ).toStrictEqual([
-      { files: ['*.test.ts'], excludeFiles: [], ruleCount: 1 },
-      { files: ['src/cli.ts'], excludeFiles: [], ruleCount: 1 },
+      {
+        files: ['*.test.ts'],
+        excludeFiles: [],
+        ruleCount: 1,
+        plugins: null,
+        preset: 'test',
+      },
+      {
+        files: ['src/cli.ts'],
+        excludeFiles: [],
+        ruleCount: 1,
+        plugins: null,
+        preset: null,
+      },
+    ]);
+  });
+
+  test('an override keeps the plugins it enables', () => {
+    expect(
+      buildLintView({
+        overrides: [{ files: ['*.test.ts'], plugins: ['vitest'] }],
+      }).overrides,
+    ).toStrictEqual([
+      {
+        files: ['*.test.ts'],
+        excludeFiles: [],
+        ruleCount: 0,
+        plugins: ['eslint', 'vitest'],
+        preset: null,
+      },
     ]);
   });
 
@@ -154,7 +189,15 @@ describe('buildLintView', () => {
           },
         ],
       }).overrides,
-    ).toStrictEqual([{ files: ['*.tsx'], excludeFiles: [], ruleCount: 1 }]);
+    ).toStrictEqual([
+      {
+        files: ['*.tsx'],
+        excludeFiles: [],
+        ruleCount: 1,
+        plugins: null,
+        preset: null,
+      },
+    ]);
   });
 });
 
