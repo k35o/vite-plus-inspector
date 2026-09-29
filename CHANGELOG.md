@@ -2,6 +2,13 @@
 
 ## 0.2.0
 
+### Patch Changes
+
+- `vp-inspect --version` prints the version of the installed package. It always
+  printed `0.0.0`.
+
+## 0.2.0
+
 ### Minor Changes
 
 - Support vite-plus v1.0.0. Configs written for vite-plus 0.x are no longer
