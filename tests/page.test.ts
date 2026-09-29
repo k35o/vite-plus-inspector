@@ -186,6 +186,60 @@ describe('page', () => {
     ).toContain('<td>&lt;img src=x onerror=1&gt;</td>');
   });
 
+  test('an override inherited from a preset names the preset', () => {
+    expect(
+      section(
+        {
+          lint: {
+            extends: [
+              {
+                plugins: ['vitest'],
+                overrides: [
+                  { files: ['**/*.test.ts'], rules: { 'no-console': 'off' } },
+                ],
+              },
+            ],
+          },
+        },
+        'lint',
+      ),
+    ).toContain(
+      '<div class="card-header">Overrides <span class="nav-badge">1</span></div><div style="padding:10px 14px;border-bottom:1px solid var(--border)"><div><span class="tag">**/*.test.ts</span></div><div class="text-small text-muted" style="margin-top:4px">1 rule override · inherited from <span class="tag">test</span></div></div>',
+    );
+  });
+
+  test('the config’s own override names no preset', () => {
+    expect(
+      section(
+        {
+          lint: {
+            overrides: [
+              { files: ['src/cli.ts'], rules: { 'no-console': 'off' } },
+            ],
+          },
+        },
+        'lint',
+      ),
+    ).toContain(
+      '<div><span class="tag">src/cli.ts</span></div><div class="text-small text-muted" style="margin-top:4px">1 rule override</div></div>',
+    );
+  });
+
+  test('an override shows the plugins it enables', () => {
+    expect(
+      section(
+        {
+          lint: {
+            overrides: [{ files: ['**/*.test.ts'], plugins: ['vitest'] }],
+          },
+        },
+        'lint',
+      ),
+    ).toContain(
+      '0 rule overrides</div><div class="text-small text-muted" style="margin-top:4px">plugins: <span class="tag">eslint</span><span class="tag">vitest</span></div></div>',
+    );
+  });
+
   test('a list option shows its items', () => {
     expect(
       section(
@@ -269,19 +323,6 @@ describe('page', () => {
     ).toContain(
       '0 rule overrides</div><table><tbody><tr><td class="mono text-blue" style="width:200px">jsPlugins</td><td><span class="text-muted">[&quot;eslint-plugin-regexp&quot;]</span></td></tr><tr><td class="mono text-blue" style="width:200px">env</td><td><span class="text-muted">{&quot;vitest&quot;:true}</span></td></tr><tr><td class="mono text-blue" style="width:200px">globals</td><td><span class="text-muted">{&quot;Bun&quot;:&quot;readonly&quot;}</span></td></tr></tbody></table></div>',
     );
-  });
-
-  test('a lint override that sets only rules shows nothing more', () => {
-    expect(
-      section(
-        {
-          lint: {
-            overrides: [{ files: ['a.ts'], rules: { 'no-var': 'off' } }],
-          },
-        },
-        'lint',
-      ),
-    ).toContain('1 rule override</div></div></div>');
   });
 
   test('an override applies to a file its files pattern matches', () => {

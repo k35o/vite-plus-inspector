@@ -301,8 +301,9 @@ export function resolveEffective(
     .toSorted(compareRules);
 }
 
-/** An override as `resolveForFile` reads it, with what else it sets. */
 export type ResolvedOverride = FileOverride & {
+  /** Label of the preset that declares it, or null for the config's own. */
+  preset: string | null;
   jsPlugins: JsPlugin[];
   env: Record<string, boolean>;
   globals: Record<string, unknown>;
@@ -321,8 +322,13 @@ export function resolveOverrides(
   const base = resolvePlugins(lint);
 
   return flattenExtends(lint)
-    .flatMap((node) => node.overrides ?? [])
-    .map((override) => {
+    .flatMap((node) =>
+      (node.overrides ?? []).map((override) => ({
+        override,
+        preset: node === lint ? null : inferPresetLabel(node),
+      })),
+    )
+    .map(({ override, preset }) => {
       const plugins = override.plugins
         ? [
             ...new Set([
@@ -348,6 +354,7 @@ export function resolveOverrides(
         files: override.files,
         excludeFiles: override.excludeFiles ?? [],
         plugins,
+        preset,
         rules,
         jsPlugins: override.jsPlugins ?? [],
         env: override.env ?? {},
