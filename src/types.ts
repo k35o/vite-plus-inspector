@@ -7,6 +7,8 @@
 
 export type RuleValue = unknown;
 
+export type JsPlugin = string | { name: string; specifier: string };
+
 /**
  * An oxlint config node. Presets (`@k8o/oxc-config` exports) and the user's
  * own `lint` block share this shape, and `extends` nests recursively
@@ -15,7 +17,7 @@ export type RuleValue = unknown;
 export type LintNode = {
   extends?: LintNode[];
   plugins?: string[];
-  jsPlugins?: string[];
+  jsPlugins?: JsPlugin[];
   categories?: Record<string, RuleValue>;
   rules?: Record<string, RuleValue>;
   settings?: Record<string, unknown>;
@@ -24,19 +26,19 @@ export type LintNode = {
   globals?: Record<string, unknown>;
   ignorePatterns?: string[];
   overrides?: LintOverride[];
-  /** Presets carry no `name`; kept for forward-compat / user-named configs. */
-  name?: string;
 };
 
 export type LintOverride = {
-  files: string | string[];
+  files: string[];
+  excludeFiles?: string[];
   plugins?: string[];
   rules?: Record<string, RuleValue>;
   env?: Record<string, boolean>;
 };
 
 export type FmtOverride = {
-  files: string | string[];
+  files: string[];
+  excludeFiles?: string[];
   options?: Record<string, unknown>;
 };
 
@@ -46,37 +48,94 @@ export type FmtConfig = {
   [key: string]: unknown;
 };
 
+export type CheckConfig = {
+  fmt?: boolean;
+  lint?: boolean;
+};
+
+export type DefaultPackageCommand = 'dev' | 'build' | 'preview' | 'pack';
+
+export type DefaultPackage =
+  | string
+  | Partial<Record<DefaultPackageCommand, string>>;
+
+export type PackEntryMap = Record<string, string | string[]>;
+
 export type PackConfig = {
-  entry?: string | string[] | Record<string, string>;
-  format?: string | string[];
+  entry?: string | PackEntryMap | Array<string | PackEntryMap>;
   [key: string]: unknown;
 };
 
+export type TaskGlob =
+  | string
+  | { auto: boolean }
+  | { pattern: string; base: 'workspace' | 'package' };
+
+export type RunTaskCache = {
+  env?: string[];
+  untrackedEnv?: string[];
+  input?: TaskGlob[];
+  output?: TaskGlob[];
+};
+
+export type RunTaskDependency =
+  | string
+  | { task: string; from: string | string[] };
+
 export type RunTask = {
-  command?: string;
+  command: string | string[];
   cwd?: string;
-  dependsOn?: string[];
-  cache?: boolean;
-  input?: unknown;
-  output?: unknown;
-  env?: Record<string, unknown>;
-  untrackedEnv?: unknown;
+  dependsOn?: RunTaskDependency[];
+  cache?: boolean | RunTaskCache;
 };
 
 export type RunConfig = {
   cache?: boolean | { scripts?: boolean; tasks?: boolean };
   enablePrePostScripts?: boolean;
-  tasks?: Record<string, RunTask>;
+  tasks?: Record<string, RunTask | string | string[]>;
+};
+
+type StagedGenerateTask = (
+  files: readonly string[],
+) => string | string[] | Promise<string | string[]>;
+
+type StagedTaskFunction = {
+  title: string;
+  task: (files: readonly string[]) => void | Promise<void>;
+};
+
+type StagedCommand = string | StagedGenerateTask;
+
+export type StagedConfig =
+  | Record<
+      string,
+      | StagedCommand
+      | StagedTaskFunction
+      | Array<StagedCommand | StagedCommand[]>
+    >
+  | StagedGenerateTask;
+
+export type CreateTemplate = {
+  name: string;
+  description: string;
+  template: string;
+};
+
+export type CreateConfig = {
+  defaultTemplate?: string;
+  templates?: CreateTemplate[];
 };
 
 export type VitePlusConfig = {
   fmt?: FmtConfig;
   lint?: LintNode;
-  staged?: Record<string, string>;
+  check?: CheckConfig;
+  staged?: StagedConfig;
   pack?: PackConfig | PackConfig[];
+  defaultPackage?: DefaultPackage;
   test?: Record<string, unknown>;
   run?: RunConfig;
-  create?: Record<string, unknown>;
+  create?: CreateConfig;
 };
 
 export type Severity = 'error' | 'warn' | 'off';
@@ -102,4 +161,9 @@ export type EnrichedRule = ResolvedRule & {
   defaultOn: boolean;
   /** True when the severity comes from an explicit rule entry (not a category baseline or default). */
   configured: boolean;
+  /**
+   * What the rule's category gives it once an override enables its plugin.
+   * Only on rules that are off because their plugin is not enabled.
+   */
+  pluginBaseline?: { severity: Severity; source: string };
 };

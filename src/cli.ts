@@ -49,12 +49,12 @@ cli
         process.exit(1);
       }
 
-      const catalog = await loadCatalog(target);
-      if (!catalog) {
-        process.stdout.write(
-          'vp-inspect: rule catalog unavailable (vp not found) — showing declared rules only\n',
+      const catalog = await loadCatalog(configPath).catch((error: unknown) => {
+        process.stderr.write(
+          `vp-inspect: rule catalog unavailable — showing declared rules only\n${(error as Error).message}\n`,
         );
-      }
+        return null;
+      });
 
       if (options.output !== undefined) {
         const outPath = resolve(process.cwd(), options.output);

@@ -3,6 +3,65 @@ blockExoticSubdeps: true
 minimumReleaseAge: 10080
 minimumReleaseAgeExclude:
   - '@k8o/*'
+  - '@oxc-project/runtime@0.151.0'
+  - '@oxc-project/types@0.151.0'
+  - '@oxfmt/binding-android-arm-eabi@0.70.0'
+  - '@oxfmt/binding-android-arm64@0.70.0'
+  - '@oxfmt/binding-darwin-arm64@0.70.0'
+  - '@oxfmt/binding-darwin-x64@0.70.0'
+  - '@oxfmt/binding-freebsd-x64@0.70.0'
+  - '@oxfmt/binding-linux-arm-gnueabihf@0.70.0'
+  - '@oxfmt/binding-linux-arm-musleabihf@0.70.0'
+  - '@oxfmt/binding-linux-arm64-gnu@0.70.0'
+  - '@oxfmt/binding-linux-arm64-musl@0.70.0'
+  - '@oxfmt/binding-linux-ppc64-gnu@0.70.0'
+  - '@oxfmt/binding-linux-riscv64-gnu@0.70.0'
+  - '@oxfmt/binding-linux-riscv64-musl@0.70.0'
+  - '@oxfmt/binding-linux-s390x-gnu@0.70.0'
+  - '@oxfmt/binding-linux-x64-gnu@0.70.0'
+  - '@oxfmt/binding-linux-x64-musl@0.70.0'
+  - '@oxfmt/binding-openharmony-arm64@0.70.0'
+  - '@oxfmt/binding-win32-arm64-msvc@0.70.0'
+  - '@oxfmt/binding-win32-ia32-msvc@0.70.0'
+  - '@oxfmt/binding-win32-x64-msvc@0.70.0'
+  - '@oxlint-tsgolint/darwin-arm64@7.0.2003'
+  - '@oxlint-tsgolint/darwin-x64@7.0.2003'
+  - '@oxlint-tsgolint/linux-arm64@7.0.2003'
+  - '@oxlint-tsgolint/linux-x64@7.0.2003'
+  - '@oxlint-tsgolint/win32-arm64@7.0.2003'
+  - '@oxlint-tsgolint/win32-x64@7.0.2003'
+  - '@oxlint/binding-android-arm-eabi@1.85.0'
+  - '@oxlint/binding-android-arm64@1.85.0'
+  - '@oxlint/binding-darwin-arm64@1.85.0'
+  - '@oxlint/binding-darwin-x64@1.85.0'
+  - '@oxlint/binding-freebsd-x64@1.85.0'
+  - '@oxlint/binding-linux-arm-gnueabihf@1.85.0'
+  - '@oxlint/binding-linux-arm-musleabihf@1.85.0'
+  - '@oxlint/binding-linux-arm64-gnu@1.85.0'
+  - '@oxlint/binding-linux-arm64-musl@1.85.0'
+  - '@oxlint/binding-linux-ppc64-gnu@1.85.0'
+  - '@oxlint/binding-linux-riscv64-gnu@1.85.0'
+  - '@oxlint/binding-linux-riscv64-musl@1.85.0'
+  - '@oxlint/binding-linux-s390x-gnu@1.85.0'
+  - '@oxlint/binding-linux-x64-gnu@1.85.0'
+  - '@oxlint/binding-linux-x64-musl@1.85.0'
+  - '@oxlint/binding-openharmony-arm64@1.85.0'
+  - '@oxlint/binding-win32-arm64-msvc@1.85.0'
+  - '@oxlint/binding-win32-ia32-msvc@1.85.0'
+  - '@oxlint/binding-win32-x64-msvc@1.85.0'
+  - '@voidzero-dev/vite-plus-core@1.0.0'
+  - '@voidzero-dev/vite-plus-darwin-arm64@1.0.0'
+  - '@voidzero-dev/vite-plus-darwin-x64@1.0.0'
+  - '@voidzero-dev/vite-plus-linux-arm64-gnu@1.0.0'
+  - '@voidzero-dev/vite-plus-linux-arm64-musl@1.0.0'
+  - '@voidzero-dev/vite-plus-linux-x64-gnu@1.0.0'
+  - '@voidzero-dev/vite-plus-linux-x64-musl@1.0.0'
+  - '@voidzero-dev/vite-plus-win32-arm64-msvc@1.0.0'
+  - '@voidzero-dev/vite-plus-win32-x64-msvc@1.0.0'
+  - oxfmt@0.70.0
+  - oxlint-tsgolint@7.0.2003
+  - oxlint@1.85.0
+  - vite-plus@1.0.0
 
 strictDepBuilds: true
 
@@ -15,8 +74,7 @@ saveExact: true
 autoInstallPeers: false
 
 overrides:
-  vite: npm:@voidzero-dev/vite-plus-core@latest
-  vitest: npm:@voidzero-dev/vite-plus-test@latest
+  'vite@*': npm:@voidzero-dev/vite-plus-core@1.0.0
 
 versioning:
   changelog:

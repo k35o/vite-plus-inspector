@@ -1,10 +1,12 @@
-import { watch, type FSWatcher } from 'node:fs';
-import { createServer, type Server, type ServerResponse } from 'node:http';
+import { watch } from 'node:fs';
+import type { FSWatcher } from 'node:fs';
+import { createServer } from 'node:http';
+import type { Server, ServerResponse } from 'node:http';
 import { basename, dirname } from 'node:path';
 
 import { buildHtml } from './build-html.ts';
 import type { RuleMeta } from './catalog.ts';
-import { buildInspectorData } from './model.ts';
+import { buildInspectorData, serializeInspectorData } from './model.ts';
 import type { VitePlusConfig } from './types.ts';
 
 export type InspectorServer = {
@@ -46,7 +48,7 @@ export async function startServer(
 
     if (url.pathname === '/__config.json') {
       res.writeHead(200, JSON_HEADERS);
-      res.end(JSON.stringify(data));
+      res.end(serializeInspectorData(data));
       return;
     }
 
