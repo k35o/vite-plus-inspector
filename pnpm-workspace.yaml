@@ -73,9 +73,6 @@ verifyDepsBeforeRun: install
 saveExact: true
 autoInstallPeers: false
 
-overrides:
-  'vite@*': npm:@voidzero-dev/vite-plus-core@1.0.0
-
 versioning:
   changelog:
     storage: repository
