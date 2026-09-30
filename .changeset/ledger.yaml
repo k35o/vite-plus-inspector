@@ -10,3 +10,7 @@ vite-plus-inspector@0.2.0:
     - oxlint-rule-resolution
     - show-hidden-config-values
     - vite-plus-v1
+vite-plus-inspector@1.0.0:
+  dir: ""
+  intents:
+    - stable-1-0
