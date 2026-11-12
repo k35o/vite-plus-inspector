@@ -2,6 +2,8 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
+import { afterEach, beforeEach, describe, expect, test } from 'vite-plus/test';
+
 import { loadCatalog, parseCatalog } from '../src/catalog.ts';
 
 function raw(fix: string): string {

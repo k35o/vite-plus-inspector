@@ -1,3 +1,5 @@
+import { describe, expect, test } from 'vite-plus/test';
+
 import type { RuleMeta } from '../src/catalog.ts';
 import {
   countPresetRules,

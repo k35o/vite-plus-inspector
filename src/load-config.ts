@@ -29,9 +29,9 @@ export async function loadConfig(root: string): Promise<VitePlusConfig> {
 
   // vite-plus skips `lazyPlugins()` factories only while this is set, which is
   // how `vp` itself reads the config blocks without running plugin setup.
-  if (loading === 0) outerMarker = process.env['VP_RESOLVING_CONFIG_METADATA'];
+  if (loading === 0) outerMarker = process.env.VP_RESOLVING_CONFIG_METADATA;
   loading += 1;
-  process.env['VP_RESOLVING_CONFIG_METADATA'] = '1';
+  process.env.VP_RESOLVING_CONFIG_METADATA = '1';
   try {
     // jiti's module cache would keep returning the file's first evaluation.
     const jiti = createJiti(import.meta.url, { moduleCache: false });
@@ -53,9 +53,9 @@ export async function loadConfig(root: string): Promise<VitePlusConfig> {
     loading -= 1;
     if (loading === 0) {
       if (outerMarker === undefined) {
-        delete process.env['VP_RESOLVING_CONFIG_METADATA'];
+        delete process.env.VP_RESOLVING_CONFIG_METADATA;
       } else {
-        process.env['VP_RESOLVING_CONFIG_METADATA'] = outerMarker;
+        process.env.VP_RESOLVING_CONFIG_METADATA = outerMarker;
       }
     }
   }

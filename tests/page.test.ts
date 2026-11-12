@@ -1,5 +1,7 @@
 import { runInNewContext } from 'node:vm';
 
+import { describe, expect, test } from 'vite-plus/test';
+
 import { buildHtml } from '../src/build-html.ts';
 import type { RuleMeta } from '../src/catalog.ts';
 import { buildInspectorData } from '../src/model.ts';
@@ -51,15 +53,15 @@ function open(config: VitePlusConfig, catalog?: RuleMeta[]) {
     },
     clearTimeout() {},
   };
-  context['window'] = context;
+  context.window = context;
   for (const [, source] of html.matchAll(/<script>([\s\S]*?)<\/script>/gu)) {
     runInNewContext(source as string, context);
   }
   return {
     el,
     // The view-model was created in the page's realm; compare a local copy.
-    data: structuredClone(context['__INSPECTOR__']) as { staged: unknown },
-    go: context['__go'] as (section: string) => void,
+    data: structuredClone(context.__INSPECTOR__) as { staged: unknown },
+    go: context.__go as (section: string) => void,
   };
 }
 
@@ -87,7 +89,7 @@ function resolveStatus(file: string): string {
   });
   page.go('lint');
   page.el('resolve-input').value = file;
-  page.el('resolve-input').listeners['input']?.();
+  page.el('resolve-input').listeners.input?.();
   return page.el('resolve-status').innerHTML;
 }
 
@@ -117,7 +119,7 @@ function ruleRow(lint: LintNode, id: string, file = ''): string {
   const page = open({ lint }, catalog);
   page.go('lint');
   page.el('resolve-input').value = file;
-  page.el('resolve-input').listeners['input']?.();
+  page.el('resolve-input').listeners.input?.();
   const rows = page.el('rules-container').innerHTML.split('<tr ');
   return rows.find((row) => row.startsWith(`data-name="${id}"`)) ?? '';
 }
@@ -396,13 +398,13 @@ describe('page', () => {
     ]);
     page.go('lint');
     page.el('resolve-input').value = 'tests/a.test.ts';
-    page.el('resolve-input').listeners['input']?.();
+    page.el('resolve-input').listeners.input?.();
     expect(
       [
         ...page
           .el('rules-container')
           .innerHTML.matchAll(/data-name="(?<id>[^"]+)"/gu),
-      ].map((match) => match.groups?.['id']),
+      ].map((match) => match.groups?.id),
     ).toStrictEqual([
       'promise/no-new-statics',
       'typescript/no-floating-promises',

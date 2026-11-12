@@ -1,3 +1,5 @@
+import { describe, expect, test } from 'vite-plus/test';
+
 import { compareRules, resolveForFile } from '../src/resolve-file.ts';
 import type { FileOverride } from '../src/resolve-file.ts';
 import { pluginOf } from '../src/rule-id.ts';
