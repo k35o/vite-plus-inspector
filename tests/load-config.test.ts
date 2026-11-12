@@ -2,6 +2,15 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from 'vite-plus/test';
+
 import { loadConfig } from '../src/load-config.ts';
 
 type Gates = { lazyPluginGates?: Array<Promise<void>> };
@@ -33,12 +42,12 @@ async function overlappingLoads(): Promise<void> {
 
 describe('loadConfig', () => {
   beforeEach(() => {
-    delete process.env['VP_RESOLVING_CONFIG_METADATA'];
+    delete process.env.VP_RESOLVING_CONFIG_METADATA;
   });
 
   afterEach(() => {
-    delete process.env['LAZY_PLUGIN_FACTORY_RAN'];
-    delete process.env['VP_RESOLVING_CONFIG_METADATA'];
+    delete process.env.LAZY_PLUGIN_FACTORY_RAN;
+    delete process.env.VP_RESOLVING_CONFIG_METADATA;
     delete (globalThis as Gates).lazyPluginGates;
   });
 
@@ -69,28 +78,28 @@ describe('loadConfig', () => {
 
   test('does not run the project’s lazy plugin factories', async () => {
     await loadConfig(lazy);
-    expect(process.env['LAZY_PLUGIN_FACTORY_RAN']).toBeUndefined();
+    expect(process.env.LAZY_PLUGIN_FACTORY_RAN).toBeUndefined();
   });
 
   test('does not run them in a load that outlasts an overlapping one', async () => {
     await overlappingLoads();
-    expect(process.env['LAZY_PLUGIN_FACTORY_RAN']).toBeUndefined();
+    expect(process.env.LAZY_PLUGIN_FACTORY_RAN).toBeUndefined();
   });
 
   test('leaves the environment unset when it was unset', async () => {
     await loadConfig(lazy);
-    expect(process.env['VP_RESOLVING_CONFIG_METADATA']).toBeUndefined();
+    expect(process.env.VP_RESOLVING_CONFIG_METADATA).toBeUndefined();
   });
 
   test('leaves the environment unset after overlapping loads', async () => {
     await overlappingLoads();
-    expect(process.env['VP_RESOLVING_CONFIG_METADATA']).toBeUndefined();
+    expect(process.env.VP_RESOLVING_CONFIG_METADATA).toBeUndefined();
   });
 
   test('restores a marker that was already set', async () => {
-    process.env['VP_RESOLVING_CONFIG_METADATA'] = 'outer';
+    process.env.VP_RESOLVING_CONFIG_METADATA = 'outer';
     await loadConfig(lazy);
-    expect(process.env['VP_RESOLVING_CONFIG_METADATA']).toBe('outer');
+    expect(process.env.VP_RESOLVING_CONFIG_METADATA).toBe('outer');
   });
 
   test('fails when the directory has no vite.config.ts', async () => {

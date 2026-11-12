@@ -22,7 +22,7 @@ cli
     'Directory containing vite.config.ts (default: current directory)',
   )
   .option('-p, --port <port>', 'Port for the inspector server', {
-    default: process.env['PORT'] ?? DEFAULT_PORT,
+    default: process.env.PORT ?? DEFAULT_PORT,
   })
   .option('-o, --output <file>', 'Write a standalone static HTML file and exit')
   .option('--no-open', 'Do not open the browser automatically')

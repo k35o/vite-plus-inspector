@@ -1,6 +1,8 @@
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 
+import { describe, expect, test } from 'vite-plus/test';
+
 import manifest from '../package.json' with { type: 'json' };
 
 const cli = join(import.meta.dirname, '../src/cli.ts');
