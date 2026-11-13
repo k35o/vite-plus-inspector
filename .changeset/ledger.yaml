@@ -14,3 +14,8 @@ vite-plus-inspector@1.0.0:
   dir: ""
   intents:
     - stable-1-0
+vite-plus-inspector@1.0.1:
+  dir: ""
+  intents:
+    - cac-7-1-0
+    - node-26-13-1
