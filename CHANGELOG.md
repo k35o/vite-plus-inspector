@@ -1,5 +1,13 @@
 # vite-plus-inspector
 
+## 1.0.1
+
+### Patch Changes
+
+- Update `cac`, the CLI's argument parser, to 7.1.0: dotted option names can no longer pollute the prototype, an omitted array option stays absent instead of defaulting, and `process.argv` is read lazily. Development tooling moves to vite-plus 1.5.0, `@k8o/oxc-config` 1.1.0 and `@types/node` 26, and CI to jdx/mise-action v5 and actions/create-github-app-token v3.3.
+
+- Relax `engines.node` from `>=24.13.0` to `>=24`, so the package installs on any Node.js 24 or later. Development moves to Node.js 26.13.1 in `mise.toml`. 26.13.1 is the November 11, 2026 security release: it fixes seven high-severity HTTP/2 and TLS vulnerabilities that earlier 24.x and 26.x releases still carry.
+
 ## 1.0.0
 
 ### Major Changes
