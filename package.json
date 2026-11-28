@@ -44,7 +44,7 @@
     "prepare": "vp config"
   },
   "dependencies": {
-    "cac": "7.1.0",
+    "cac": "7.1.1",
     "jiti": "2.7.0"
   },
   "devDependencies": {
